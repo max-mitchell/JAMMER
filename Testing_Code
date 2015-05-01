@@ -21,7 +21,7 @@ boolean change = false;
 float octo = 5;
 boolean[] plays = new boolean[13];
 
-PImage conor = new PImage();
+//PImage conor = new PImage();
 
 
 double sendToArd = 0;
@@ -34,7 +34,7 @@ void setup() {
   arduino = new Arduino(this, Arduino.list()[0], 57600);//change to 0 if there is no arduino
   arduino.pinMode(7, Arduino.INPUT);
   arduino.pinMode(9, Arduino.OUTPUT);
-  conor = loadImage("maliha.jpg");
+  //conor = loadImage("maliha.jpg");
 }
 
 void draw() {
@@ -128,9 +128,9 @@ void draw() {
     gain.setGain(map(vol, 300, 0, 0, .8));
   }
 
-  //fill(hue);
-  //rect(50, 50, 100, 100);
-  image(conor, 50, 50, 100, 118);
+  fill(hue);
+  rect(50, 50, 100, 100);
+  //image(conor, 50, 50, 100, 118);
   fill(160);
   rect(200, 0, 50, height);
   rect(250, 0, 50, height);
