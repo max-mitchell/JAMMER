@@ -1,0 +1,230 @@
+import beads.*;
+import java.util.*;
+import processing.serial.*;
+import cc.arduino.*;
+
+ArrayList<WavePlayer> notes = new ArrayList<WavePlayer>();
+AudioContext ac = new AudioContext();
+Gain gain = new Gain(ac, 1, .3);
+
+Arduino arduino;
+
+
+
+color hue = color(160);
+boolean createNote = false;
+boolean endIt = false;
+int place = 0;
+int pitch = 200;
+int vol = 200;
+boolean change = false;
+float octo = 5;
+boolean[] plays = new boolean[13];
+
+PImage conor = new PImage();
+
+
+double sendToArd = 0;
+float halfStep = 2.296666;
+
+void setup() {
+  size(1000, 300);
+  background(20, 70, 200);
+  ac.out.addInput(gain);
+  arduino = new Arduino(this, Arduino.list()[0], 57600);//change to 0 if there is no arduino
+  arduino.pinMode(7, Arduino.INPUT);
+  arduino.pinMode(9, Arduino.OUTPUT);
+  conor = loadImage("maliha.jpg");
+}
+
+void draw() {
+  background(20, 70, 200);
+  fill(255);
+  rect(300, 0, 700, 300);
+  fill(0);
+  text((int)(16.35*pow((pitch/30.0)/12.0+octo, 2)), 350, 20);
+  text(gain.getGain(), 350, 40);
+
+  if (mouseX < 150 && mouseX > 50 && mouseY < 150 && mouseY > 50)
+    hue = color(200);
+  else
+    hue = color(160);
+
+  //pitch = arduino.analogRead(3);
+  //vol = arduino.analogRead(5);
+
+  if (createNote) {
+    if (endIt == false) {
+      for (int i = 0; i < plays.length; i++) {
+        notes.add(new WavePlayer(ac, 0, Buffer.SINE));
+      }
+      for (int i = 0; i < place+plays.length; i++) {
+        gain.removeAllConnections(notes.get(i));
+      }
+      for (int i = 0; i < plays.length; i++) {
+        gain.addInput(notes.get(place+i));
+      }
+      println(gain.getIns());
+      ac.start();
+      createNote = false;
+      endIt = true;
+    } else if (endIt) {
+      ac.stop();
+      //notes.remove(place); 
+      place++;
+      endIt = false;
+      createNote = false;
+    }
+  }
+
+  if (arduino.digitalRead(7) == Arduino.HIGH) {
+    //    /println("touched"+millis());
+    change = true;
+  }
+
+  if (change) {
+    //createNote = true;
+    change = false;
+  }
+
+  if (endIt) {
+    Set<UGen> waves = new HashSet<UGen>();
+    waves = gain.getConnectedInputs();
+    float[] hzs = new float[notes.size()];
+    double ouPut = 0;
+    for (int i = 0; i < notes.size(); i++) {
+      for (Iterator<UGen> it = waves.iterator(); it.hasNext(); ) {
+        UGen f = it.next();
+        if (f.equals(notes.get(i))) {
+          hzs[i] = notes.get(i).getFrequency();
+        }
+      }
+    }
+
+
+    int N = (int) (44100.00 * .1);
+    double[] a1 = new double[N + 1];
+    for (int i = 0; i <= N; i++) {
+      for (int j = 0; j < hzs.length; j++) {
+        a1[i] += (Math.sin(2 * Math.PI * i * hzs[j] / 44100.00) * gain.getGain());
+      }
+      point(map(i, 0, N, 300, 1000), map((float)a1[i], -2, 2, 0, 300));
+    }
+
+    //println(hz1);
+  }
+  // arduino.tone(9, outPut);
+
+
+  if (endIt == true) {
+
+    for (int j = 0; j < plays.length; j++) {
+      if (plays[j]) {
+        notes.get(place+j).setFrequency(16.35*pow(((pitch/30.0)+(halfStep*(float)j))/12.0+octo, 2));
+      } else
+        notes.get(place+j).setFrequency(0);
+    }
+
+    gain.setGain(map(vol, 300, 0, 0, .8));
+  }
+
+  //fill(hue);
+  //rect(50, 50, 100, 100);
+  image(conor, 50, 50, 100, 118);
+  fill(160);
+  rect(200, 0, 50, height);
+  rect(250, 0, 50, height);
+  fill(0);
+  rectMode(CENTER);
+  rect(225, pitch, 25, 25);
+  rect(275, vol, 25, 25);
+  rectMode(CORNER);
+}
+
+void mouseReleased() {
+  if (mouseX < 150 && mouseX > 50 && mouseY < 150 && mouseY > 50) {
+    createNote = true;
+  }
+}
+
+void mouseDragged() {
+  if (mouseX < 250 && mouseX > 200) {
+    pitch = mouseY;
+  } else  if (mouseX < 300 && mouseX > 250) {
+    vol = mouseY;
+  }
+}
+
+void mousePressed() {
+  if (mouseX < 250 && mouseX > 200) {
+    pitch = mouseY;
+  } else if (mouseX < 300 && mouseX > 250) {
+    vol = mouseY;
+  }
+}
+
+void keyPressed() {
+  if (key == 's') {
+    plays[0] = true;
+  } else if (key == 'e') {
+    plays[1] = true;
+  } else if (key == 'd') {
+    plays[2] = true;
+  } else if (key == 'r') {
+    plays[3] = true;
+  } else if (key == 'f') {
+    plays[4] = true;
+  } else if (key == 'g') {
+    plays[5] = true;
+  } else if (key == 'y') {
+    plays[6] = true;
+  } else if (key == 'h') {
+    plays[7] = true;
+  } else if (key == 'u') {
+    plays[8] = true;
+  } else if (key == 'j') {
+    plays[9] = true;
+  } else if (key == 'i') {
+    plays[10] = true;
+  } else if (key == 'k') {
+    plays[11] = true;
+  } else if (key == 'l') {
+    plays[12] = true;
+  }
+}
+
+void keyReleased() {
+  if (key == 's') {
+    plays[0] = false;
+  } else if (key == 'e') {
+    plays[1] = false;
+  } else if (key == 'd') {
+    plays[2] = false;
+  } else if (key == 'r') {
+    plays[3] = false;
+  } else if (key == 'f') {
+    plays[4] = false;
+  } else if (key == 'g') {
+    plays[5] = false;
+  } else if (key == 'y') {
+    plays[6] = false;
+  } else if (key == 'h') {
+    plays[7] = false;
+  } else if (key == 'u') {
+    plays[8] = false;
+  } else if (key == 'j') {
+    plays[9] = false;
+  } else if (key == 'i') {
+    plays[10] = false;
+  } else if (key == 'k') {
+    plays[11] = false;
+  } else if (key == 'l') {
+    plays[12] = false;
+  } else if (key == CODED) {
+    if (keyCode == UP) {
+      octo++;
+    } else if (keyCode == DOWN) {
+      octo--;
+    }
+  }
+}
