@@ -21,8 +21,13 @@ boolean change = false;
 float octo = 5;
 boolean[] plays = new boolean[13];
 
-//PImage conor = new PImage();
+PImage conor = new PImage();
+int move = 0;
+int m = 0;
 
+boolean doTheThing = false;
+
+double a2[];
 
 double sendToArd = 0;
 float halfStep = 2.296666;
@@ -31,10 +36,16 @@ void setup() {
   size(1000, 300);
   background(20, 70, 200);
   ac.out.addInput(gain);
-  arduino = new Arduino(this, Arduino.list()[0], 57600);//change to 0 if there is no arduino
+  println(Arduino.list());
+  arduino = new Arduino(this, Arduino.list()[1], 57600);//change to 0 if there is no arduino
   arduino.pinMode(7, Arduino.INPUT);
+  arduino.pinMode(4, Arduino.INPUT);
+  arduino.pinMode(3, Arduino.INPUT);
+  arduino.pinMode(2, Arduino.INPUT);
+  arduino.pinMode(1, Arduino.INPUT);
+  arduino.pinMode(0, Arduino.INPUT);
   arduino.pinMode(9, Arduino.OUTPUT);
-  //conor = loadImage("maliha.jpg");
+  conor = loadImage("conor.png");
 }
 
 void draw() {
@@ -50,8 +61,8 @@ void draw() {
   else
     hue = color(160);
 
-  //pitch = arduino.analogRead(3);
-  //vol = arduino.analogRead(5);
+  // pitch = arduino.analogRead(3);
+  // vol = arduino.analogRead(5);
 
   if (createNote) {
     if (endIt == false) {
@@ -87,7 +98,22 @@ void draw() {
     change = false;
   }
 
+  //arduino.tone(9, 500);
+
+
   if (endIt) {
+
+    for (int j = 0; j < plays.length; j++) {
+      if (plays[j]) {
+        notes.get(place+j).setFrequency(16.35*pow(((pitch/30.0)+(halfStep*(float)j))/12.0+octo, 2));
+      } else
+        notes.get(place+j).setFrequency(0);
+    }
+
+    gain.setGain(map(vol, 300, 0, 0, .8));
+    //}
+
+    //if (endIt) {
     Set<UGen> waves = new HashSet<UGen>();
     waves = gain.getConnectedInputs();
     float[] hzs = new float[notes.size()];
@@ -100,33 +126,65 @@ void draw() {
         }
       }
     }
-
-
-    int N = (int) (44100.00 * .1);
+    int N = (int) (44100.00 * .01);
     double[] a1 = new double[N + 1];
+    a2 = new double[N + 1];
     for (int i = 0; i <= N; i++) {
       for (int j = 0; j < hzs.length; j++) {
         a1[i] += (Math.sin(2 * Math.PI * i * hzs[j] / 44100.00) * gain.getGain());
       }
       point(map(i, 0, N, 300, 1000), map((float)a1[i], -2, 2, 0, 300));
+      //arduino.analogWrite(9, (int)map((float)a1[i], -1, 1, 0, 1024));
+      //println((int)map((float)a1[i], -2, 2, 0, 1024));
     }
 
     //println(hz1);
+    //createNote = true;
   }
   // arduino.tone(9, outPut);
 
+  //if (doTheThing) {
+  //  arduino.analogWrite(9, (int)map((float)a2[m], -1, 1, 0, 1024));
+  //  m++;
+  //  if (m >= a2.length) {
+  //    m = 0;
+  //  }
 
-  if (endIt == true) {
 
-    for (int j = 0; j < plays.length; j++) {
-      if (plays[j]) {
-        notes.get(place+j).setFrequency(16.35*pow(((pitch/30.0)+(halfStep*(float)j))/12.0+octo, 2));
-      } else
-        notes.get(place+j).setFrequency(0);
-    }
+  //println(a2[m]);
+  //}
 
-    gain.setGain(map(vol, 300, 0, 0, .8));
+  if (arduino.digitalRead(4) == Arduino.HIGH) {
+    plays[7] = true;
+  } else if (arduino.digitalRead(4) == Arduino.LOW) {
+    plays[7] = false;
   }
+
+  if (arduino.digitalRead(3) == Arduino.HIGH) {
+    plays[5] = true;
+  } else if (arduino.digitalRead(3) == Arduino.LOW) {
+    plays[5] = false;
+  }
+
+  if (arduino.digitalRead(2) == Arduino.HIGH) {
+    plays[4] = true;
+  } else if (arduino.digitalRead(2) == Arduino.LOW) {
+    plays[4] = false;
+  }
+
+  if (arduino.digitalRead(1) == Arduino.HIGH) {
+    plays[2] = true;
+  } else if (arduino.digitalRead(1) == Arduino.LOW) {
+    plays[2] = false;
+  }
+
+  if (arduino.digitalRead(0) == Arduino.HIGH) {
+    plays[0] = true;
+  } else if (arduino.digitalRead(0) == Arduino.LOW) {
+    plays[0] = false;
+  }
+  //println(arduino.digitalRead(4));
+
 
   fill(hue);
   rect(50, 50, 100, 100);
