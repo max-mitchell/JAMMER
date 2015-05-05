@@ -100,6 +100,12 @@ void draw() {
 
   //arduino.tone(9, 500);
 
+  //halfStep = 16.35*pow((pitch/30.0)/12.0+octo, 2) = 2 * 16.35*pow((pitch/30.0+halfStep*12.0)/12.0+octo, 2)
+
+  halfStep = 1.0/24.0*(sqrt(2.0)*sqrt(pow(pitch/30.0, 2)+24.0*(pitch/30.0)*octo+144.0*pow(octo, 2))-2.0*(pitch/30.0)-24.0*octo);
+
+    println(halfStep);
+
 
   if (endIt) {
 
@@ -154,35 +160,35 @@ void draw() {
   //println(a2[m]);
   //}
 
-  if (arduino.digitalRead(4) == Arduino.HIGH) {
-    plays[7] = true;
-  } else if (arduino.digitalRead(4) == Arduino.LOW) {
-    plays[7] = false;
-  }
-
-  if (arduino.digitalRead(3) == Arduino.HIGH) {
-    plays[5] = true;
-  } else if (arduino.digitalRead(3) == Arduino.LOW) {
-    plays[5] = false;
-  }
-
-  if (arduino.digitalRead(2) == Arduino.HIGH) {
-    plays[4] = true;
-  } else if (arduino.digitalRead(2) == Arduino.LOW) {
-    plays[4] = false;
-  }
-
-  if (arduino.digitalRead(1) == Arduino.HIGH) {
-    plays[2] = true;
-  } else if (arduino.digitalRead(1) == Arduino.LOW) {
-    plays[2] = false;
-  }
-
-  if (arduino.digitalRead(0) == Arduino.HIGH) {
-    plays[0] = true;
-  } else if (arduino.digitalRead(0) == Arduino.LOW) {
-    plays[0] = false;
-  }
+  //  if (arduino.digitalRead(4) == Arduino.HIGH) {
+  //    plays[7] = true;
+  //  } else if (arduino.digitalRead(4) == Arduino.LOW) {
+  //    plays[7] = false;
+  //  }
+  //
+  //  if (arduino.digitalRead(3) == Arduino.HIGH) {
+  //    plays[5] = true;
+  //  } else if (arduino.digitalRead(3) == Arduino.LOW) {
+  //    plays[5] = false;
+  //  }
+  //
+  //  if (arduino.digitalRead(2) == Arduino.HIGH) {
+  //    plays[4] = true;
+  //  } else if (arduino.digitalRead(2) == Arduino.LOW) {
+  //    plays[4] = false;
+  //  }
+  //
+  //  if (arduino.digitalRead(1) == Arduino.HIGH) {
+  //    plays[2] = true;
+  //  } else if (arduino.digitalRead(1) == Arduino.LOW) {
+  //    plays[2] = false;
+  //  }
+  //
+  //  if (arduino.digitalRead(0) == Arduino.HIGH) {
+  //    plays[0] = true;
+  //  } else if (arduino.digitalRead(0) == Arduino.LOW) {
+  //    plays[0] = false;
+  //  }
   //println(arduino.digitalRead(4));
 
 
