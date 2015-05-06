@@ -6,20 +6,34 @@ import cc.arduino.*;
 ArrayList<WavePlayer> notes = new ArrayList<WavePlayer>();
 AudioContext ac = new AudioContext();
 Gain gain = new Gain(ac, 1, .3);
+Clip dist = new Clip(ac, 1);
 
 Arduino arduino;
 
 
 
-color hue = color(160);
+color hue1 = color(160);
+color hue2 = color(160);
+color hue3 = color(160);
 boolean createNote = false;
 boolean endIt = false;
 int place = 0;
 int pitch = 200;
 int vol = 200;
+float gainValue = 0;
+float distMax, distMin = 0;
+float distVal = 50;
+float LFOval = 50;
+float LFOmod = 0;
+float maxAmp = 0;
+float maxPit = 0;
 boolean change = false;
 float octo = 5;
 boolean[] plays = new boolean[13];
+boolean distort = false;
+boolean doLFO = false;
+boolean LFOdown = true;
+int LFOmode = 1;
 
 PImage conor = new PImage();
 int move = 0;
@@ -36,15 +50,15 @@ void setup() {
   size(1000, 300);
   background(20, 70, 200);
   ac.out.addInput(gain);
-  println(Arduino.list());
-  arduino = new Arduino(this, Arduino.list()[1], 57600);//change to 0 if there is no arduino
-  arduino.pinMode(7, Arduino.INPUT);
-  arduino.pinMode(4, Arduino.INPUT);
-  arduino.pinMode(3, Arduino.INPUT);
-  arduino.pinMode(2, Arduino.INPUT);
-  arduino.pinMode(1, Arduino.INPUT);
-  arduino.pinMode(0, Arduino.INPUT);
-  arduino.pinMode(9, Arduino.OUTPUT);
+  // println(Arduino.list());
+  // arduino = new Arduino(this, Arduino.list()[0], 57600);//change to 0 if there is no arduino
+  // arduino.pinMode(7, Arduino.INPUT);
+  // arduino.pinMode(4, Arduino.INPUT);
+  // arduino.pinMode(3, Arduino.INPUT);
+  // arduino.pinMode(2, Arduino.INPUT);
+  // arduino.pinMode(1, Arduino.INPUT);
+  // arduino.pinMode(0, Arduino.INPUT);
+  // arduino.pinMode(9, Arduino.OUTPUT);
   conor = loadImage("conor.png");
 }
 
@@ -53,13 +67,33 @@ void draw() {
   fill(255);
   rect(300, 0, 700, 300);
   fill(0);
-  text((int)(16.35*pow((pitch/30.0)/12.0+octo, 2)), 350, 20);
-  text(gain.getGain(), 350, 40);
+  text((int)(16.35*pow((pitch/30.0)/12.0+octo, 2)), 500, 20);
+  text(gain.getGain(), 500, 40);
+  text(dist.getMaximum(), 500, 60);
+  text(LFOmod, 500, 80);
 
-  if (mouseX < 150 && mouseX > 50 && mouseY < 150 && mouseY > 50)
-    hue = color(200);
-  else
-    hue = color(160);
+  if (mouseX < 150 && mouseX > 50 && mouseY < 150 && mouseY > 50) {
+    hue1 = color(200);
+  } else {
+    hue1 = color(160);
+  }
+
+  if (mouseX < 100 && mouseX > 50 && mouseY < 250 && mouseY > 200) {
+    hue2 = color(200);
+  } else {
+    hue2 = color(160);
+  }
+
+
+  if (mouseX < 150 && mouseX > 100 && mouseY < 250 && mouseY > 200) {
+    hue3 = color(200);
+  } else {
+    hue3 = color(160);
+  }
+
+  LFOmod = map(LFOval, 0, 300, .1, 0);
+
+
 
   // pitch = arduino.analogRead(3);
   // vol = arduino.analogRead(5);
@@ -75,6 +109,8 @@ void draw() {
       for (int i = 0; i < plays.length; i++) {
         gain.addInput(notes.get(place+i));
       }
+
+      dist.addInput(gain);
       println(gain.getIns());
       ac.start();
       createNote = false;
@@ -88,26 +124,63 @@ void draw() {
     }
   }
 
-  if (arduino.digitalRead(7) == Arduino.HIGH) {
-    //    /println("touched"+millis());
-    change = true;
-  }
+  // if (arduino.digitalRead(7) == Arduino.HIGH) {
+  //   //    /println("touched"+millis());
+  //   change = true;
+  // }
 
-  if (change) {
-    //createNote = true;
-    change = false;
-  }
+  // if (change) {
+  //   //createNote = true;
+  //   change = false;
+  // }
 
   //arduino.tone(9, 500);
 
   //halfStep = 16.35*pow((pitch/30.0)/12.0+octo, 2) = 2 * 16.35*pow((pitch/30.0+halfStep*12.0)/12.0+octo, 2)
 
-  halfStep = 1.0/24.0*(sqrt(2.0)*sqrt(pow(pitch/30.0, 2)+24.0*(pitch/30.0)*octo+144.0*pow(octo, 2))-2.0*(pitch/30.0)-24.0*octo);
+  //halfStep = 1.0/24.0*(sqrt(2.0)*sqrt(pow(pitch/30.0, 2)+24.0*(pitch/30.0)*octo+144.0*pow(octo, 2))-2.0*(pitch/30.0)-24.0*octo);
 
-    println(halfStep);
 
+
+  distMax = map(distVal, 50, 300, 1, 0);
+  distMin = -distMax;
+
+  if (doLFO == false) {
+    gainValue = map(vol, 300, 0, 0, .8);
+  }
+
+  //println(distVal+"   "+distMax+"    "+distMin);
 
   if (endIt) {
+
+    if (doLFO) {
+      if (LFOmode == 0) {
+        if (LFOdown) {
+          gainValue -= LFOmod;
+        } else if (LFOdown == false) {
+          gainValue += LFOmod;
+        }
+
+        if (gain.getGain() < 0) {
+          LFOdown = false;
+        } else if (gain.getGain() > maxAmp) {
+          LFOdown = true;
+        }
+      } else if (LFOmode == 1) {
+        if (LFOdown) {
+          pitch -= 100;
+        } else if (LFOdown == false) {
+          pitch += 100;
+        }
+
+        if (16.35*pow((pitch/30.0)/12.0+octo, 2) < 0) {
+          LFOdown = false;
+        } else if (16.35*pow((pitch/30.0)/12.0+octo, 2) > maxPit) {
+          LFOdown = true;
+          pitch -= 101;
+        }
+      }
+    }
 
     for (int j = 0; j < plays.length; j++) {
       if (plays[j]) {
@@ -116,7 +189,8 @@ void draw() {
         notes.get(place+j).setFrequency(0);
     }
 
-    gain.setGain(map(vol, 300, 0, 0, .8));
+    gain.setGain(gainValue);
+    dist.setRange(distMin, distMax);
     //}
 
     //if (endIt) {
@@ -124,21 +198,28 @@ void draw() {
     waves = gain.getConnectedInputs();
     float[] hzs = new float[notes.size()];
     double ouPut = 0;
-    for (int i = 0; i < notes.size(); i++) {
-      for (Iterator<UGen> it = waves.iterator(); it.hasNext(); ) {
+    for (int i = 0; i < notes.size (); i++) {
+      for (Iterator<UGen> it = waves.iterator (); it.hasNext(); ) {
         UGen f = it.next();
         if (f.equals(notes.get(i))) {
           hzs[i] = notes.get(i).getFrequency();
         }
       }
     }
-    int N = (int) (44100.00 * .01);
+    int N = (int) (44100.00 * .1);
     double[] a1 = new double[N + 1];
     a2 = new double[N + 1];
     for (int i = 0; i <= N; i++) {
       for (int j = 0; j < hzs.length; j++) {
         a1[i] += (Math.sin(2 * Math.PI * i * hzs[j] / 44100.00) * gain.getGain());
       }
+      if (distort) {
+        if (a1[i] > distMax)
+          a1[i] = distMax;
+        else if (a1[i] < distMin)
+          a1[i] = distMin;
+      } 
+
       point(map(i, 0, N, 300, 1000), map((float)a1[i], -2, 2, 0, 300));
       //arduino.analogWrite(9, (int)map((float)a1[i], -1, 1, 0, 1024));
       //println((int)map((float)a1[i], -2, 2, 0, 1024));
@@ -192,22 +273,49 @@ void draw() {
   //println(arduino.digitalRead(4));
 
 
-  fill(hue);
+  fill(hue1);
   rect(50, 50, 100, 100);
+  fill(hue2);
+  rect(50, 200, 50, 50);
+  fill(hue3);
+  rect(100, 200, 50, 50);
   //image(conor, 50, 50, 100, 118);
   fill(160);
   rect(200, 0, 50, height);
   rect(250, 0, 50, height);
+  rect(300, 0, 50, height);
+  rect(350, 0, 50, height);
   fill(0);
   rectMode(CENTER);
   rect(225, pitch, 25, 25);
   rect(275, vol, 25, 25);
+  rect(325, distVal, 25, 25);
+  rect(375, LFOval, 25, 25);
   rectMode(CORNER);
 }
 
 void mouseReleased() {
   if (mouseX < 150 && mouseX > 50 && mouseY < 150 && mouseY > 50) {
     createNote = true;
+  } else if (mouseX < 100 && mouseX > 50 && mouseY < 250 && mouseY > 200) {
+    if (distort) {
+      distort = false;
+      ac.out.removeAllConnections(dist);
+      ac.out.addInput(gain);
+    } else if (distort == false) {
+      distort = true;
+      ac.out.removeAllConnections(gain);
+      ac.out.addInput(dist);
+    }
+  } else if (mouseX < 150 && mouseX > 100 && mouseY < 250 && mouseY > 200) {
+    if (doLFO) 
+      doLFO = false; 
+    else {
+      doLFO = true;
+      maxAmp = gain.getGain();
+      maxPit = 16.35*pow((pitch/30.0)/12.0+octo, 2);
+      println(maxPit);
+    }
   }
 }
 
@@ -216,6 +324,10 @@ void mouseDragged() {
     pitch = mouseY;
   } else  if (mouseX < 300 && mouseX > 250) {
     vol = mouseY;
+  } else  if (mouseX < 350 && mouseX > 300) {
+    distVal = mouseY;
+  } else  if (mouseX < 400 && mouseX > 350) {
+    LFOval = mouseY;
   }
 }
 
