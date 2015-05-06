@@ -7,4 +7,4 @@ If you're not, why read me?
 
 
 Basically just copy the code into a Processing scetch.
-That should de the trick nicely.
+That should do the trick nicely.
