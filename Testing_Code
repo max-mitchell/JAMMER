@@ -33,7 +33,7 @@ boolean[] plays = new boolean[13];
 boolean distort = false;
 boolean doLFO = false;
 boolean LFOdown = true;
-int LFOmode = 1;
+int LFOmode = 1; //0 for Trem, 1 for Bass
 
 PImage conor = new PImage();
 int move = 0;
