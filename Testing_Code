@@ -44,22 +44,23 @@ boolean doTheThing = false;
 double a2[];
 
 double sendToArd = 0;
-float halfStep = 2.296666;
+float halfStep = 0;
+float stepCount = 12;
 
 void setup() {
   size(1000, 300);
   background(20, 70, 200);
   ac.out.addInput(gain);
-  // println(Arduino.list());
-  // arduino = new Arduino(this, Arduino.list()[0], 57600);//change to 0 if there is no arduino
-  // arduino.pinMode(7, Arduino.INPUT);
-  // arduino.pinMode(4, Arduino.INPUT);
-  // arduino.pinMode(3, Arduino.INPUT);
-  // arduino.pinMode(2, Arduino.INPUT);
-  // arduino.pinMode(1, Arduino.INPUT);
-  // arduino.pinMode(0, Arduino.INPUT);
-  // arduino.pinMode(9, Arduino.OUTPUT);
-  conor = loadImage("conor.png");
+  println(Arduino.list());
+  arduino = new Arduino(this, Arduino.list()[0], 57600);//change to 0 if there is no arduino
+  arduino.pinMode(7, Arduino.INPUT);
+  arduino.pinMode(4, Arduino.INPUT);
+  arduino.pinMode(3, Arduino.INPUT);
+  arduino.pinMode(2, Arduino.INPUT);
+  arduino.pinMode(1, Arduino.INPUT);
+  arduino.pinMode(0, Arduino.INPUT);
+  arduino.pinMode(9, Arduino.OUTPUT);
+  conor = loadImage("maliha.jpg");
 }
 
 void draw() {
@@ -136,9 +137,9 @@ void draw() {
 
   //arduino.tone(9, 500);
 
-  //halfStep = 16.35*pow((pitch/30.0)/12.0+octo, 2) = 2 * 16.35*pow((pitch/30.0+halfStep*12.0)/12.0+octo, 2)
+  //halfStep = 16.35*pow((pitch/30.0)/12+octo, 2) * 2 =  16.35*pow((pitch/30.0+halfStep*12.0)/12+octo, 2)
 
-  //halfStep = 1.0/24.0*(sqrt(2.0)*sqrt(pow(pitch/30.0, 2)+24.0*(pitch/30.0)*octo+144.0*pow(octo, 2))-2.0*(pitch/30.0)-24.0*octo);
+  halfStep = 1.0/stepCount * (sqrt(2) * sqrt(pow((pitch/30.0), 2.0)+stepCount*2 * (pitch/30.0) * octo+stepCount*stepCount * pow(octo, 2.0))-(pitch/30.0)-stepCount * octo);
 
 
 
@@ -168,16 +169,16 @@ void draw() {
         }
       } else if (LFOmode == 1) {
         if (LFOdown) {
-          pitch -= 100;
+          pitch -= map(LFOval, 0, 300, 250, 0);
         } else if (LFOdown == false) {
-          pitch += 100;
+          pitch += map(LFOval, 0, 300, 250, 0);
         }
 
-        if (16.35*pow((pitch/30.0)/12.0+octo, 2) < 0) {
+        if (16.35*pow((pitch/30.0)/12.0+octo, 2) < 50) {
           LFOdown = false;
         } else if (16.35*pow((pitch/30.0)/12.0+octo, 2) > maxPit) {
           LFOdown = true;
-          pitch -= 101;
+          //pitch -= 101;
         }
       }
     }
@@ -273,13 +274,13 @@ void draw() {
   //println(arduino.digitalRead(4));
 
 
-  fill(hue1);
-  rect(50, 50, 100, 100);
+  //fill(hue1);
+  //rect(50, 50, 100, 100);
   fill(hue2);
   rect(50, 200, 50, 50);
   fill(hue3);
   rect(100, 200, 50, 50);
-  //image(conor, 50, 50, 100, 118);
+  image(conor, 50, 50, 100, 118);
   fill(160);
   rect(200, 0, 50, height);
   rect(250, 0, 50, height);
