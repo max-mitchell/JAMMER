@@ -6,5 +6,5 @@ If you're in the know, you already know what's up.
 If you're not, why read me?
 
 
-Basically just copy the code into a Processing scetch.
+Basically just download the folder and open the code with Processing.
 That should do the trick nicely.
