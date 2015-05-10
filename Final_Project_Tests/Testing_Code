@@ -60,7 +60,7 @@ void setup() {
   arduino.pinMode(1, Arduino.INPUT);
   arduino.pinMode(0, Arduino.INPUT);
   arduino.pinMode(9, Arduino.OUTPUT);
-  conor = loadImage("maliha.jpg");
+  conor = loadImage("conor.png");
 }
 
 void draw() {
