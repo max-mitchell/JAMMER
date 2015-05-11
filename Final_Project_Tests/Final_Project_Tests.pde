@@ -52,7 +52,7 @@ void setup() {
   background(20, 70, 200);
   ac.out.addInput(gain);
   println(Arduino.list());
-  arduino = new Arduino(this, Arduino.list()[0], 57600);//change to 0 if there is no arduino
+  arduino = new Arduino(this, Arduino.list()[1], 57600);//change to 0 if there is no arduino
   arduino.pinMode(7, Arduino.INPUT);
   arduino.pinMode(4, Arduino.INPUT);
   arduino.pinMode(3, Arduino.INPUT);
@@ -60,7 +60,7 @@ void setup() {
   arduino.pinMode(1, Arduino.INPUT);
   arduino.pinMode(0, Arduino.INPUT);
   arduino.pinMode(9, Arduino.OUTPUT);
-  conor = loadImage("conor.png");
+  conor = loadImage("maliha.jpg");
 }
 
 void draw() {
@@ -96,8 +96,10 @@ void draw() {
 
 
 
-  // pitch = arduino.analogRead(3);
-  // vol = arduino.analogRead(5);
+   pitch = arduino.analogRead(3);
+   vol = arduino.analogRead(5);
+   distVal = arduino.analogRead(1);
+   LFOval = arduino.analogRead(0);
 
   if (createNote) {
     if (endIt == false) {
@@ -274,13 +276,13 @@ void draw() {
   //println(arduino.digitalRead(4));
 
 
-  //fill(hue1);
-  //rect(50, 50, 100, 100);
+  fill(hue1);
+  rect(50, 50, 100, 100);
   fill(hue2);
   rect(50, 200, 50, 50);
   fill(hue3);
   rect(100, 200, 50, 50);
-  image(conor, 50, 50, 100, 118);
+  //image(conor, 50, 50, 100, 118);
   fill(160);
   rect(200, 0, 50, height);
   rect(250, 0, 50, height);
