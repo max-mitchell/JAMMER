@@ -58,7 +58,15 @@ void draw() {
 
 void keyReleased(){
  if (key == '1'){
-  port.write('T1');
+  port.write("T1X");
+ } else if (key == '2'){
+  port.write("T2X");
+ } else if (key == '3'){
+  port.write("T3X");
+ } else if (key == '4'){
+  port.write("T4X");
+ } else if (key == '5'){
+  port.write("T5X");
  } 
   
 }
