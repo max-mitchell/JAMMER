@@ -31,7 +31,6 @@
 // set the mode here
 #define MODE LATCHING 
 
-using namespace System;
 
 
 Adafruit_Trellis matrix0 = Adafruit_Trellis();
@@ -96,20 +95,40 @@ void loop() {
 
 
   int val = 0;
+  char dats[6];
+  char str[6] = "";
 
   if (Serial.available() > 0) {
-    val = Serial.read();
+    //val = Serial.read();
 
-    Serial.println(val);
+    //Serial.println(val);
+
+    Serial.readBytesUntil('X', dats, 6);
+
+    for (uint8_t i=0; i<6; i++){
+      Serial.println(dats[i]);
+      str
+    }
 
     if (val == 84){
-      if (trellis.isLED(GetNumericValue((char)Serial.peek())))
-        trellis.clrLED(int.Parse(((char)Serial.peek()).ToString()));
-      else
-        trellis.setLED(int.Parse(((char)Serial.peek()).ToString()));    
-      trellis.writeDisplay();
-      Serial.println(int.Parse(((char)Serial.peek()).ToString()));
-      delay(30);
+      if ((int)Serial.peek()-'0' >= 0){
+        if (trellis.isLED((int)Serial.peek()-'0'))
+          trellis.clrLED((int)Serial.peek()-'0');
+        else
+          trellis.setLED((int)Serial.peek()-'0');    
+        trellis.writeDisplay();
+        //Serial.println((int)Serial.peek()-'0');
+        delay(30);
+      }
+      else {
+        if (trellis.isLED((int)Serial.peek()))
+          trellis.clrLED((int)Serial.peek());
+        else
+          trellis.setLED((int)Serial.peek());    
+        trellis.writeDisplay();
+        //Serial.println((int)Serial.peek());
+        delay(30);
+      }
     }
 
 
@@ -160,10 +179,9 @@ void loop() {
 }
 
 
-public:
-static double GetNumericValue(
-	wchar_t c
-)
+
+
+
 
 
 
