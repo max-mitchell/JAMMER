@@ -29,27 +29,27 @@
 #define MOMENTARY 0
 #define LATCHING 1
 // set the mode here
-#define MODE LATCHING 
+#define MODE MOMENTARY 
 
 
 
 Adafruit_Trellis matrix0 = Adafruit_Trellis();
 
 // uncomment the below to add 3 more matrices
-/*
+
 Adafruit_Trellis matrix1 = Adafruit_Trellis();
  Adafruit_Trellis matrix2 = Adafruit_Trellis();
  Adafruit_Trellis matrix3 = Adafruit_Trellis();
  // you can add another 4, up to 8
- */
+ 
 
 // Just one
-Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0);
+//Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0);
 // or use the below to select 4, up to 8 can be passed in
-//Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0, &matrix1, &matrix2, &matrix3);
+Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0, &matrix1, &matrix2, &matrix3);
 
 // set to however many you're working with here, up to 8
-#define NUMTRELLIS 1
+#define NUMTRELLIS 4
 
 #define numKeys (NUMTRELLIS * 16)
 
@@ -62,9 +62,14 @@ Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0);
 // Even 8 tiles use only 3 wires max
 
 
+int Vval = 0;
+int Pval = 0;
+String out = "";
+String oldOut = "";
+
+
 void setup() {
   Serial.begin(9600);
-  Serial.println("Trellis Demo");
 
   // INT pin requires a pullup
   pinMode(INTPIN, INPUT);
@@ -72,8 +77,8 @@ void setup() {
 
   // begin() with the addresses of each panel in order
   // I find it easiest if the addresses are in order
-  trellis.begin(0x70);  // only one
-  // trellis.begin(0x70, 0x71, 0x72, 0x73);  // or four!
+  //trellis.begin(0x70);  // only one
+   trellis.begin(0x70, 0x71, 0x72, 0x73);  // or four!
 
   // light up all the LEDs in order
   for (uint8_t i=0; i<numKeys; i++) {
@@ -91,12 +96,45 @@ void setup() {
 
 
 void loop() {
-  delay(30); // 30ms delay is required, dont remove me!
+  delay(60); // 30ms delay is required, dont remove me!
+
+  String out = "";
+  
+  
+  Vval = analogRead(A0);
+
+  if (Vval > 999)
+    out = "V"+String(Vval)+"X";
+  else if (Vval > 99) 
+    out = "V0"+String(Vval)+"X";
+  else if (Vval > 9)
+    out = "V00"+String(Vval)+"X";
+  else 
+    out = "V000"+String(Vval)+"X";
+
+  //if (out.equals(oldOut));
+  //else
+    Serial.println(out);  
+  
+    Pval = analogRead(A3);
+
+  if (Pval > 999)
+    out = "P"+String(Pval)+"X";
+  else if (Pval > 99) 
+    out = "P0"+String(Pval)+"X";
+  else if (Pval > 9)
+    out = "P00"+String(Pval)+"X";
+  else 
+    out = "P000"+String(Pval)+"X";
+
+  //if (out.equals(oldOut));
+  //else
+    Serial.println(out);
 
 
   int val = 0;
   char dats[6];
-  char str[6] = "";
+  String str = "";
 
   if (Serial.available() > 0) {
     //val = Serial.read();
@@ -105,30 +143,23 @@ void loop() {
 
     Serial.readBytesUntil('X', dats, 6);
 
-    for (uint8_t i=0; i<6; i++){
+    for (uint8_t i=1; i<5; i++){
       Serial.println(dats[i]);
-      str
+      str+=dats[i];
     }
 
-    if (val == 84){
-      if ((int)Serial.peek()-'0' >= 0){
-        if (trellis.isLED((int)Serial.peek()-'0'))
-          trellis.clrLED((int)Serial.peek()-'0');
-        else
-          trellis.setLED((int)Serial.peek()-'0');    
-        trellis.writeDisplay();
-        //Serial.println((int)Serial.peek()-'0');
-        delay(30);
-      }
-      else {
-        if (trellis.isLED((int)Serial.peek()))
-          trellis.clrLED((int)Serial.peek());
-        else
-          trellis.setLED((int)Serial.peek());    
-        trellis.writeDisplay();
-        //Serial.println((int)Serial.peek());
-        delay(30);
-      }
+    val = str.toInt();
+
+    //Serial.println(val);
+
+    if (dats[0] == 84){
+      if (trellis.isLED(val))
+        trellis.clrLED(val);
+      else
+        trellis.setLED(val);    
+      trellis.writeDisplay();
+      //Serial.println((int)Serial.peek()-'0');
+
     }
 
 
@@ -140,18 +171,36 @@ void loop() {
     if (trellis.readSwitches()) {
       // go through every button
       for (uint8_t i=0; i<numKeys; i++) {
+        out = "";
         // if it was pressed, turn it on
         if (trellis.justPressed(i)) {
-          Serial.println(i);
+          out+="T00";
+          if (i < 10){
+            out+="0"; 
+          } 
+          out+=i;
+          out+="X";
+          Serial.println(out);
           trellis.setLED(i);
         } 
+        out = "";
         // if it was released, turn it off
         if (trellis.justReleased(i)) {
-          Serial.print("^"); 
-          Serial.println(i);
+          out+="T00";
+          if (i < 10){
+            out+="0"; 
+          } 
+          out+=i;
+          out+="X";
+          Serial.println(out);
           trellis.clrLED(i);
         }
+        //if (trellis.isLED(i))
+        //  Serial.print("1");
+        //else
+        //  Serial.print("0");
       }
+      //Serial.println();
       // tell the trellis to set the LEDs we requested
       trellis.writeDisplay();
     }
@@ -177,6 +226,9 @@ void loop() {
     }
   }
 }
+
+
+
 
 
 
