@@ -9,6 +9,17 @@ Gain gain = new Gain(ac, 1, .3);
 Clip dist = new Clip(ac, 1);
 
 Arduino arduino;
+Serial port;
+
+int Tval = -1;
+int Vval = -1;
+int Pval = -1;
+int last;
+String in;
+int inVal;
+int timer = 1;
+boolean[] buttons = new boolean[64];
+
 
 
 
@@ -48,11 +59,12 @@ float halfStep = 0;
 float stepCount = 12;
 
 void setup() {
-  size(1000, 300);
+  size(1000, 700);
   background(20, 70, 200);
   ac.out.addInput(gain);
   println(Arduino.list());
-  arduino = new Arduino(this, Arduino.list()[1], 57600);//change to 0 if there is no arduino
+  arduino = new Arduino(this, Arduino.list()[2], 9600);
+  port = new Serial(this, Arduino.list()[1], 9600);  
   arduino.pinMode(7, Arduino.INPUT);
   arduino.pinMode(4, Arduino.INPUT);
   arduino.pinMode(3, Arduino.INPUT);
@@ -65,6 +77,9 @@ void setup() {
 
 void draw() {
   background(20, 70, 200);
+  stroke(0);
+  fill(0);
+  rect(0, 300, 1000, 400);
   fill(255);
   rect(300, 0, 700, 300);
   fill(0);
@@ -72,6 +87,8 @@ void draw() {
   text(gain.getGain(), 500, 40);
   text(dist.getMaximum(), 500, 60);
   text(LFOmod, 500, 80);
+  
+
 
   if (mouseX < 150 && mouseX > 50 && mouseY < 150 && mouseY > 50) {
     hue1 = color(200);
@@ -96,10 +113,12 @@ void draw() {
 
 
 
-   pitch = arduino.analogRead(3);
-   vol = arduino.analogRead(5);
-   distVal = arduino.analogRead(1);
-   LFOval = arduino.analogRead(0);
+  pitch = arduino.analogRead(3);
+  vol = arduino.analogRead(0);
+  //distVal = arduino.analogRead(1);
+  //LFOval = arduino.analogRead(0);
+  
+  println(pitch);
 
   if (createNote) {
     if (endIt == false) {
@@ -276,6 +295,104 @@ void draw() {
   //println(arduino.digitalRead(4));
 
 
+
+
+
+
+
+
+
+
+
+  if (port.available() > 0) {
+    in = port.readString();
+
+    //println(in);
+
+    if (in.length() >= 6) {
+      if (in.charAt(0) == 'T') {
+        try {
+          Tval = Integer.parseInt(in.substring(1, 5));
+          last = Tval;
+        } 
+        catch (NumberFormatException e) {
+          println("------\nERROR    " + in + "------");
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < buttons.length; i++) {
+    if (i == Tval) {
+      buttons[i] = true;
+    } else {
+      buttons[i] = false;
+    }
+  }  
+
+
+
+
+
+  float Vmapped = map(arduino.analogRead(0), 0, 1023, 0, 2*(float)Math.PI);
+  float Pmapped = map(arduino.analogRead(3), 0, 1023, 0, 2*(float)Math.PI);
+
+  stroke(43, 153, 224);
+  line(400, 380, 400, 370);
+  for (float i = 0; i < Vmapped; i+=.01) {
+    point(-30.0*sin(i) + 400, 30.0*cos(i) + 350);
+  }
+
+  for (float i = 0; i < Vmapped; i+=.01) {
+    point(-20.0*sin(i) + 400, 20.0*cos(i) + 350);
+  }
+
+  line(-30.0*sin(Vmapped) + 400, 30.0*cos(Vmapped) + 350, 
+  -20.0*sin(Vmapped) + 400, 20.0*cos(Vmapped) + 350);
+
+  fill(43, 153, 224);
+  text(Vval, 400, 350);
+  text("Volume", 400, 315);
+
+
+  line(300, 380, 300, 370);
+  for (float i = 0; i < Pmapped; i+=.01) {
+    point(-30.0*sin(i) + 300, 30.0*cos(i) + 350);
+  }
+
+  for (float i = 0; i < Pmapped; i+=.01) {
+    point(-20.0*sin(i) + 300, 20.0*cos(i) + 350);
+  }
+
+  line(-30.0*sin(Pmapped) + 300, 30.0*cos(Pmapped) + 350, 
+  -20.0*sin(Pmapped) + 300, 20.0*cos(Pmapped) + 350);
+
+  fill(43, 153, 224);
+  text(Pval, 300, 350);
+  text("Pitch", 300, 315);
+
+  noStroke();
+
+  Tval = -1;
+
+  int y = 150;
+  int x = -1;
+  for (int i = 0; i < buttons.length; i++) {
+
+    if (i % 16 == 0) {
+      y+=50;
+      x++;
+    }
+    if (buttons[i])
+      fill(255);
+    else 
+      fill(50);
+    rect(map(i-(16*x), 0, 15, 40, 450), 300+y, 20, 20);
+  }
+
+
+
+  stroke(0);
   fill(hue1);
   rect(50, 50, 100, 100);
   fill(hue2);
@@ -284,10 +401,10 @@ void draw() {
   rect(100, 200, 50, 50);
   //image(conor, 50, 50, 100, 118);
   fill(160);
-  rect(200, 0, 50, height);
-  rect(250, 0, 50, height);
-  rect(300, 0, 50, height);
-  rect(350, 0, 50, height);
+  rect(200, 0, 50, 300);
+  rect(250, 0, 50, 300);
+  rect(300, 0, 50, 300);
+  rect(350, 0, 50, 300);
   fill(0);
   rectMode(CENTER);
   rect(225, pitch, 25, 25);
