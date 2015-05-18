@@ -38,10 +38,10 @@ Adafruit_Trellis matrix0 = Adafruit_Trellis();
 // uncomment the below to add 3 more matrices
 
 Adafruit_Trellis matrix1 = Adafruit_Trellis();
- Adafruit_Trellis matrix2 = Adafruit_Trellis();
- Adafruit_Trellis matrix3 = Adafruit_Trellis();
- // you can add another 4, up to 8
- 
+Adafruit_Trellis matrix2 = Adafruit_Trellis();
+Adafruit_Trellis matrix3 = Adafruit_Trellis();
+// you can add another 4, up to 8
+
 
 // Just one
 //Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0);
@@ -65,7 +65,8 @@ Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0, &matrix1, &matrix2,
 int Vval = 0;
 int Pval = 0;
 String out = "";
-String oldOut = "";
+String butNum[64];
+boolean on[64];
 
 
 void setup() {
@@ -78,12 +79,18 @@ void setup() {
   // begin() with the addresses of each panel in order
   // I find it easiest if the addresses are in order
   //trellis.begin(0x70);  // only one
-   trellis.begin(0x70, 0x71, 0x72, 0x73);  // or four!
+  trellis.begin(0x70, 0x71, 0x72, 0x73);  // or four!
 
   // light up all the LEDs in order
   for (uint8_t i=0; i<numKeys; i++) {
     trellis.setLED(i);
     trellis.writeDisplay();    
+    on[i] = false;
+    butNum[i]+="00";
+    if (i < 10){
+      butNum[i]+="0"; 
+    } 
+    butNum[i]+=i;
     delay(50);
   }
   // then turn them off
@@ -98,73 +105,40 @@ void setup() {
 void loop() {
   delay(60); // 30ms delay is required, dont remove me!
 
-  String out = "";
-  
-  
-  Vval = analogRead(A0);
-
-  if (Vval > 999)
-    out = "V"+String(Vval)+"X";
-  else if (Vval > 99) 
-    out = "V0"+String(Vval)+"X";
-  else if (Vval > 9)
-    out = "V00"+String(Vval)+"X";
-  else 
-    out = "V000"+String(Vval)+"X";
-
-  //if (out.equals(oldOut));
-  //else
-    Serial.println(out);  
-  
-    Pval = analogRead(A3);
-
-  if (Pval > 999)
-    out = "P"+String(Pval)+"X";
-  else if (Pval > 99) 
-    out = "P0"+String(Pval)+"X";
-  else if (Pval > 9)
-    out = "P00"+String(Pval)+"X";
-  else 
-    out = "P000"+String(Pval)+"X";
-
-  //if (out.equals(oldOut));
-  //else
-    Serial.println(out);
-
 
   int val = 0;
   char dats[6];
   String str = "";
 
-  if (Serial.available() > 0) {
-    //val = Serial.read();
-
-    //Serial.println(val);
-
-    Serial.readBytesUntil('X', dats, 6);
-
-    for (uint8_t i=1; i<5; i++){
-      Serial.println(dats[i]);
-      str+=dats[i];
-    }
-
-    val = str.toInt();
-
-    //Serial.println(val);
-
-    if (dats[0] == 84){
-      if (trellis.isLED(val))
-        trellis.clrLED(val);
-      else
-        trellis.setLED(val);    
-      trellis.writeDisplay();
-      //Serial.println((int)Serial.peek()-'0');
-
-    }
-
-
-
-  }
+  /*if (Serial.available() > 0) {
+   //val = Serial.read();
+   
+   //Serial.println(val);
+   
+   Serial.readBytesUntil('X', dats, 6);
+   
+   for (uint8_t i=1; i<5; i++){
+   Serial.println(dats[i]);
+   str+=dats[i];
+   }
+   
+   val = str.toInt();
+   
+   //Serial.println(val);
+   
+   if (dats[0] == 84){
+   if (trellis.isLED(val))
+   trellis.clrLED(val);
+   else
+   trellis.setLED(val);    
+   trellis.writeDisplay();
+   //Serial.println((int)Serial.peek()-'0');
+   
+   }
+   
+   
+   
+   }*/
 
   if (MODE == MOMENTARY) {
     // If a button was just pressed or released...
@@ -174,26 +148,14 @@ void loop() {
         out = "";
         // if it was pressed, turn it on
         if (trellis.justPressed(i)) {
-          out+="T00";
-          if (i < 10){
-            out+="0"; 
-          } 
-          out+=i;
-          out+="X";
-          Serial.println(out);
           trellis.setLED(i);
+          on[i] = true;
         } 
         out = "";
         // if it was released, turn it off
         if (trellis.justReleased(i)) {
-          out+="T00";
-          if (i < 10){
-            out+="0"; 
-          } 
-          out+=i;
-          out+="X";
-          Serial.println(out);
           trellis.clrLED(i);
+          on[i] = false;
         }
         //if (trellis.isLED(i))
         //  Serial.print("1");
@@ -205,6 +167,14 @@ void loop() {
       trellis.writeDisplay();
     }
   }
+
+  for (uint8_t i=0; i<numKeys; i++) {
+    if (on[i]){
+      Serial.println("T"+butNum[i]+"X");
+    } 
+  }
+
+
 
   if (MODE == LATCHING) {
     // If a button was just pressed or released...
@@ -225,7 +195,13 @@ void loop() {
       trellis.writeDisplay();
     }
   }
+
+
+
+
+
 }
+
 
 
 
