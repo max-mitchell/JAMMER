@@ -82,28 +82,31 @@ void setup() {
   trellis.begin(0x70, 0x71, 0x72, 0x73);  // or four!
 
   // light up all the LEDs in order
-  for (uint8_t i=0; i<numKeys; i++) {
-    trellis.setLED(i);
-    trellis.writeDisplay();    
-    on[i] = false;
-    butNum[i]+="00";
-    if (i < 10){
-      butNum[i]+="0"; 
-    } 
-    butNum[i]+=i;
+  for (uint8_t i=0; i<numKeys+16; i++) {
+    if (i < numKeys) {
+      trellis.setLED(i);
+    }
+
+    if (i >= 16){
+      trellis.clrLED(i-16);
+    }
+    trellis.writeDisplay();  
+    if (i < numKeys) { 
+      on[i] = false;
+      butNum[i]+="00";
+      if (i < 10){
+        butNum[i]+="0"; 
+      } 
+      butNum[i]+=i;
+    }
     delay(50);
   }
-  // then turn them off
-  for (uint8_t i=0; i<numKeys; i++) {
-    trellis.clrLED(i);
-    trellis.writeDisplay();    
-    delay(50);
-  }
+
 }
 
 
 void loop() {
-  delay(60); // 30ms delay is required, dont remove me!
+  delay(30); // 30ms delay is required, dont remove me!
 
 
   int val = 0;
@@ -170,7 +173,7 @@ void loop() {
 
   for (uint8_t i=0; i<numKeys; i++) {
     if (on[i]){
-      Serial.println("T"+butNum[i]+"X");
+      Serial.println(butNum[i]);
     } 
   }
 
@@ -201,6 +204,9 @@ void loop() {
 
 
 }
+
+
+
 
 
 
