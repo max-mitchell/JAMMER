@@ -2,11 +2,18 @@ import beads.*;
 import java.util.*;
 import processing.serial.*;
 import cc.arduino.*;
+import java.applet.*;
+import java.io.*;
+import java.net.*;
+import javax.sound.sampled.*;
 
 ArrayList<WavePlayer> notes = new ArrayList<WavePlayer>();
 AudioContext ac = new AudioContext();
-Gain gain = new Gain(ac, 1, .3);
-Clip dist = new Clip(ac, 1);
+Envelope drums1 = new Envelope(ac, .3);
+Gain gain = new Gain(ac, 1, drums1);
+//Clip dist = new Clip(ac, 1);
+int[] timeAtPlay = new int[12];
+boolean drumming = false;
 
 Arduino arduino;
 Serial port;
@@ -16,9 +23,48 @@ int Vval = -1;
 int Pval = -1;
 int last;
 String in;
+String in2;
 int inVal;
-int timer = 1;
+int timer = 0;
 boolean[] buttons = new boolean[64];
+boolean[] Wasbuttons = new boolean[64];
+boolean lookBack = false;
+String inBack = "";
+
+
+
+
+
+
+
+
+
+
+final int SAMPLE_RATE = 44100;
+
+final int BYTES_PER_SAMPLE = 2;                // 16-bit audio
+final int BITS_PER_SAMPLE = 16;                // 16-bit audio
+final double MAX_16_BIT = Short.MAX_VALUE;     // 32,767
+final int SAMPLE_BUFFER_SIZE = 4096;
+
+
+SourceDataLine line1;   // to play the sound
+byte[] buffer;         // our internal buffer
+int bufferSize = 0;    // number of samples currently in internal buffer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -59,23 +105,18 @@ float halfStep = 0;
 float stepCount = 12;
 
 void setup() {
+  begin();
   size(1000, 700);
   background(20, 70, 200);
   ac.out.addInput(gain);
   println(Arduino.list());
-  arduino = new Arduino(this, Arduino.list()[2], 9600);
-  port = new Serial(this, Arduino.list()[1], 9600);  
-  arduino.pinMode(7, Arduino.INPUT);
-  arduino.pinMode(4, Arduino.INPUT);
-  arduino.pinMode(3, Arduino.INPUT);
-  arduino.pinMode(2, Arduino.INPUT);
-  arduino.pinMode(1, Arduino.INPUT);
-  arduino.pinMode(0, Arduino.INPUT);
-  arduino.pinMode(9, Arduino.OUTPUT);
+  arduino = new Arduino(this, Arduino.list()[1], 57600);  //other inputs
+  port = new Serial(this, Arduino.list()[2], 9600);  //trellis
   conor = loadImage("maliha.jpg");
 }
 
 void draw() {
+  timer++;
   background(20, 70, 200);
   stroke(0);
   fill(0);
@@ -85,9 +126,9 @@ void draw() {
   fill(0);
   text((int)(16.35*pow((pitch/30.0)/12.0+octo, 2)), 500, 20);
   text(gain.getGain(), 500, 40);
-  text(dist.getMaximum(), 500, 60);
+  //text(dist.getMaximum(), 500, 60);
   text(LFOmod, 500, 80);
-  
+
 
 
   if (mouseX < 150 && mouseX > 50 && mouseY < 150 && mouseY > 50) {
@@ -115,10 +156,9 @@ void draw() {
 
   pitch = arduino.analogRead(3);
   vol = arduino.analogRead(0);
-  //distVal = arduino.analogRead(1);
+  distVal = arduino.analogRead(1);
   //LFOval = arduino.analogRead(0);
-  
-  println(pitch);
+
 
   if (createNote) {
     if (endIt == false) {
@@ -132,7 +172,7 @@ void draw() {
         gain.addInput(notes.get(place+i));
       }
 
-      dist.addInput(gain);
+      //dist.addInput(gain);
       println(gain.getIns());
       ac.start();
       createNote = false;
@@ -164,11 +204,11 @@ void draw() {
 
 
 
-  distMax = map(distVal, 50, 300, 1, 0);
+  distMax = map(distVal, 0, 1024, 1, 0);
   distMin = -distMax;
 
   if (doLFO == false) {
-    gainValue = map(vol, 300, 0, 0, .8);
+    gainValue = map(vol, 1024, 0, 0, .8);
   }
 
   //println(distVal+"   "+distMax+"    "+distMin);
@@ -207,12 +247,24 @@ void draw() {
     for (int j = 0; j < plays.length; j++) {
       if (plays[j]) {
         notes.get(place+j).setFrequency(16.35*pow(((pitch/30.0)+(halfStep*(float)j))/12.0+octo, 2));
+        //drums1.addSegment(gainValue, 20);
+        //drums1.addSegment(0, 100);
+        //drumming = true;
+        timeAtPlay[0] = timer;
       } else
         notes.get(place+j).setFrequency(0);
     }
 
-    gain.setGain(gainValue);
-    dist.setRange(distMin, distMax);
+    if (timer > timeAtPlay[0] + 120) {
+      drumming = false;
+      drums1.clear();
+    }
+
+    if (drumming == false) {
+      //drums1.setValue(0);
+    }
+    drums1.setValue(gainValue);
+    //dist.setRange(distMin, distMax);
     //}
 
     //if (endIt) {
@@ -228,11 +280,17 @@ void draw() {
         }
       }
     }
+    float g = gain.getGain();
+    float y = 0;
     int N = (int) (44100.00 * .1);
     double[] a1 = new double[N + 1];
     a2 = new double[N + 1];
     for (int i = 0; i <= N; i++) {
       for (int j = 0; j < hzs.length; j++) {
+        //        if (i < N/4.0)
+        //          y+=.0001;
+        //        else 
+        //          y-=.000025;
         a1[i] += (Math.sin(2 * Math.PI * i * hzs[j] / 44100.00) * gain.getGain());
       }
       if (distort) {
@@ -246,6 +304,8 @@ void draw() {
       //arduino.analogWrite(9, (int)map((float)a1[i], -1, 1, 0, 1024));
       //println((int)map((float)a1[i], -2, 2, 0, 1024));
     }
+
+    play(a1);
 
     //println(hz1);
     //createNote = true;
@@ -304,38 +364,66 @@ void draw() {
 
 
 
-  if (port.available() > 0) {
+ /* if (port.available() > 0) {
+
+    String tempIn = "";
+
     in = port.readString();
 
-    //println(in);
 
-    if (in.length() >= 6) {
-      if (in.charAt(0) == 'T') {
-        try {
-          Tval = Integer.parseInt(in.substring(1, 5));
-          last = Tval;
-        } 
-        catch (NumberFormatException e) {
-          println("------\nERROR    " + in + "------");
+    if (in.length() == 4) {
+      println(in+"  in");
+      for (int i = 0; i < in.length(); i++) {
+        if (in.substring(i, i+1).equals(null));
+        else {
+          tempIn += in.substring(i, i+1);
         }
       }
+      Tval = Integer.parseInt(tempIn);
+    } 
+
+    if (lookBack) {
+      for (int i = 0; i < in.length(); i++) {
+        inBack += in.substring(i, i+1)+"";
+      }
+      lookBack = false;
+      println(inBack+"    inBack");
+      for (int i = 0; i < inBack.length(); i++) {
+        if (inBack.substring(i, i+1).equals(null));
+        else {
+          tempIn += inBack.substring(i, i+1);
+        }
+      }
+      Tval = Integer.parseInt(tempIn);
+    }
+
+    if (in.length() != 0 && in.length() < 4) {
+      lookBack = true;
+      inBack = in;
     }
   }
 
   for (int i = 0; i < buttons.length; i++) {
     if (i == Tval) {
       buttons[i] = true;
+      Wasbuttons[i] = true;
     } else {
-      buttons[i] = false;
+      if (timer % 20 == 0) {
+        Wasbuttons[i] = false;
+        buttons[i] = false;
+      }
     }
-  }  
+  }  */
 
 
 
 
 
-  float Vmapped = map(arduino.analogRead(0), 0, 1023, 0, 2*(float)Math.PI);
-  float Pmapped = map(arduino.analogRead(3), 0, 1023, 0, 2*(float)Math.PI);
+  float Vmapped = map(map(vol, 1024, 0, 0, .8), 0, .8, 0, 2*(float)Math.PI);
+  float Pmapped = map((int)(16.35*pow((pitch/30.0)/12.0+octo, 2)), 0, 2000, 0, 2*(float)Math.PI);
+
+
+  textAlign(CENTER);
 
   stroke(43, 153, 224);
   line(400, 380, 400, 370);
@@ -351,7 +439,7 @@ void draw() {
   -20.0*sin(Vmapped) + 400, 20.0*cos(Vmapped) + 350);
 
   fill(43, 153, 224);
-  text(Vval, 400, 350);
+  text(map(vol, 1024, 0, 0, .8), 400, 350);
   text("Volume", 400, 315);
 
 
@@ -368,7 +456,7 @@ void draw() {
   -20.0*sin(Pmapped) + 300, 20.0*cos(Pmapped) + 350);
 
   fill(43, 153, 224);
-  text(Pval, 300, 350);
+  text((int)(16.35*pow((pitch/30.0)/12.0+octo, 2)), 300, 350);
   text("Pitch", 300, 315);
 
   noStroke();
@@ -407,11 +495,14 @@ void draw() {
   rect(350, 0, 50, 300);
   fill(0);
   rectMode(CENTER);
-  rect(225, pitch, 25, 25);
-  rect(275, vol, 25, 25);
-  rect(325, distVal, 25, 25);
-  rect(375, LFOval, 25, 25);
+  rect(225, map(pitch, 0, 1024, 0, 300), 25, 25);
+  rect(275, map(vol, 0, 1024, 0, 300), 25, 25);
+  rect(325, map(distVal, 0, 1024, 0, 300), 25, 25);
+  rect(375, map(LFOval, 0, 1024, 0, 300), 25, 25);
   rectMode(CORNER);
+
+
+  gainValue = 0;
 }
 
 void mouseReleased() {
@@ -420,12 +511,12 @@ void mouseReleased() {
   } else if (mouseX < 100 && mouseX > 50 && mouseY < 250 && mouseY > 200) {
     if (distort) {
       distort = false;
-      ac.out.removeAllConnections(dist);
+      //ac.out.removeAllConnections(dist);
       ac.out.addInput(gain);
     } else if (distort == false) {
       distort = true;
       ac.out.removeAllConnections(gain);
-      ac.out.addInput(dist);
+      //ac.out.addInput(dist);
     }
   } else if (mouseX < 150 && mouseX > 100 && mouseY < 250 && mouseY > 200) {
     if (doLFO) 
@@ -445,9 +536,9 @@ void mouseDragged() {
   } else  if (mouseX < 300 && mouseX > 250) {
     vol = mouseY;
   } else  if (mouseX < 350 && mouseX > 300) {
-    distVal = mouseY;
+    distVal = map(mouseY, 0, 1024, 0, 300);
   } else  if (mouseX < 400 && mouseX > 350) {
-    LFOval = mouseY;
+    LFOval = map(mouseY, 0, 1024, 0, 300);
   }
 }
 
@@ -522,5 +613,54 @@ void keyReleased() {
     } else if (keyCode == DOWN) {
       octo--;
     }
+  }
+}
+
+
+void begin() {
+  try {
+    // 44,100 samples per second, 16-bit audio, mono, signed PCM, little Endian
+    AudioFormat format = new AudioFormat((float) SAMPLE_RATE, BITS_PER_SAMPLE, 1, true, false);
+    DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+
+    line1 = (SourceDataLine) AudioSystem.getLine(info);
+    line1.open(format, SAMPLE_BUFFER_SIZE * BYTES_PER_SAMPLE);
+
+    // the internal buffer is a fraction of the actual buffer size, this choice is arbitrary
+    // it gets divided because we can't expect the buffered data to line up exactly with when
+    // the sound card decides to push out its samples.
+    buffer = new byte[SAMPLE_BUFFER_SIZE * BYTES_PER_SAMPLE/3];
+  } 
+  catch (Exception e) {
+    System.out.println(e.getMessage());
+    System.exit(1);
+  }
+
+  // no sound gets made before this call
+  line1.start();
+}
+
+
+void play(double in) {
+
+  // clip if outside [-1, +1]
+  if (in < -1.0) in = -1.0;
+  if (in > +1.0) in = +1.0;
+
+  // convert to bytes
+  short s = (short) (MAX_16_BIT * in);
+  buffer[bufferSize++] = (byte) s;
+  buffer[bufferSize++] = (byte) (s >> 8);   // little Endian
+
+  // send to sound card if buffer is full        
+  if (bufferSize >= buffer.length) {
+    line1.write(buffer, 0, buffer.length);
+    bufferSize = 0;
+  }
+}
+
+void play(double[] input) {
+  for (int i = 0; i < input.length; i++) {
+    play(input[i]);
   }
 }
