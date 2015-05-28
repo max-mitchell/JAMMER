@@ -237,13 +237,11 @@ void draw() {
       if (notes.get(m).getStatus()) {
         double[] a1 = new double[N + 1];
         for (int i = 0; i <= N; i++) {
-          for (int j = 0; j < notes.size(); j++) {
             //        if (i < N/4.0)
             //          y+=.0001;
             //        else 
             //          y-=.000025;
-            a1[i] += (Math.sin(2 * Math.PI * i * hzs[j] / 44100.00) * gainValue);
-          }
+            a1[i] += (Math.sin(2 * Math.PI * i * hzs[m] / 44100.00) * gainValue);
           //          if (distort) {
           //            if (a1[i] > distMax)
           //              a1[i] = distMax;
@@ -279,6 +277,7 @@ void draw() {
       for (int j = 0; j < 13; j++) {
         a2[i]+=notes.get(j).getSine()[i];
       }
+      point(map(i, 0, N, 300, 1000), map((float)a2[i], -2, 2, 0, 300));
     }
     play(a2);
 
