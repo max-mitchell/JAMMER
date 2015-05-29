@@ -47,23 +47,11 @@ final int SAMPLE_BUFFER_SIZE = 4096;
 SourceDataLine line1;   // to play the sound
 byte[] buffer;         // our internal buffer
 int bufferSize = 0;    // number of samples currently in internal buffer
+double noteTime = .031;
+int N = (int) (44100.00 * noteTime);
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-int N = (int) (44100.00 * .1);
 
 
 color hue1 = color(160);
@@ -105,8 +93,9 @@ void setup() {
   size(1000, 700);
   background(20, 70, 200);
   println(Arduino.list());
-  arduino = new Arduino(this, Arduino.list()[1], 57600);  //other inputs
-  port = new Serial(this, Arduino.list()[2], 9600);  //trellis
+  println(Serial.list());
+  //arduino = new Arduino(this, Arduino.list()[1], 57600);  //other inputs
+  //port = new Serial(this, Serial.list()[0], 9600);  //trellis
   conor = loadImage("maliha.jpg");
 }
 
@@ -149,16 +138,16 @@ void draw() {
 
 
 
-  pitch = arduino.analogRead(3);
-  vol = arduino.analogRead(0);
-  distVal = arduino.analogRead(1);
+  //pitch = arduino.analogRead(3);
+  //vol = arduino.analogRead(0);
+  //distVal = arduino.analogRead(1);
   //LFOval = arduino.analogRead(0);
 
 
   if (createNote) {
     if (endIt == false) {
       for (int i = 0; i < 13; i++) {
-        notes.add(new Note(new double[N+1], false, i));
+        notes.add(new Note(new double[N+1], i));
       }
       createNote = false;
       endIt = true;
@@ -188,13 +177,11 @@ void draw() {
 
 
   distMax = map(distVal, 0, 1024, 1, 0);
-  distMin = -distMax;
 
   if (doLFO == false) {
     gainValue = map(vol, 1024, 0, 0, .8);
   }
 
-  //println(distVal+"   "+distMax+"    "+distMin);
 
   if (endIt) {
 
@@ -234,28 +221,64 @@ void draw() {
     }
 
     for (int m = 0; m < 13; m++) {
-      if (notes.get(m).getStatus()) {
-        double[] a1 = new double[N + 1];
-        for (int i = 0; i <= N; i++) {
-            //        if (i < N/4.0)
-            //          y+=.0001;
-            //        else 
-            //          y-=.000025;
-            a1[i] += (Math.sin(2 * Math.PI * i * hzs[m] / 44100.00) * gainValue);
-          //          if (distort) {
-          //            if (a1[i] > distMax)
-          //              a1[i] = distMax;
-          //            else if (a1[i] < distMin)
-          //              a1[i] = distMin;
-          //          } 
 
-          //point(map(i, 0, N, 300, 1000), map((float)a1[i], -2, 2, 0, 300));
-          //arduino.analogWrite(9, (int)map((float)a1[i], -1, 1, 0, 1024));
-          //println((int)map((float)a1[i], -2, 2, 0, 1024));
+
+      if (notes.get(m).getStatus() == 1) {
+        notes.get(m).setGain(notes.get(m).getGain()+gainValue*.4);
+        if (notes.get(m).getGain() >= gainValue+gainValue*.2)
+          notes.get(m).setStatus(2);
+      } 
+
+      //
+
+
+      else if (notes.get(m).getStatus() == 2) {
+        notes.get(m).setGain(notes.get(m).getGain()-gainValue*.2);
+        if (notes.get(m).getGain() <= gainValue)
+          notes.get(m).setStatus(3);
+      }
+
+
+      //
+
+
+      else if (notes.get(m).getStatus() == 3) {
+        notes.get(m).setGain(gainValue);
+      } 
+
+      //
+
+      else if (notes.get(m).getStatus() == 4) {
+        notes.get(m).setGain(notes.get(m).getGain()-gainValue*.3);
+        if (notes.get(m).getGain() <= 0) {
+          notes.get(m).setStatus(0);
+          notes.get(m).setGain(0);
         }
-        notes.get(m).setSine(a1);
-      } //else
-      //notes.get(j).setFrequency(0);
+      }
+
+
+      //
+
+
+      else if (notes.get(m).getStatus() == 0) {
+        notes.get(m).setGain(0);
+      }
+
+
+      //
+
+
+      for (int i = 0; i <= N; i++) {
+        if (distort) {
+          if ((Math.sin(2 * Math.PI * i * hzs[m] / 44100.00) * notes.get(m).getGain()) > distMax) {
+            notes.get(m).setSine(distMax, i);
+          } else if ((Math.sin(2 * Math.PI * i * hzs[m] / 44100.00) * notes.get(m).getGain()) < -distMax) {
+            notes.get(m).setSine(-distMax, i);
+          } else 
+          notes.get(m).setSine((Math.sin(2 * Math.PI * i * hzs[m] / 44100.00) * notes.get(m).getGain()), i);
+        } else 
+          notes.get(m).setSine((Math.sin(2 * Math.PI * i * hzs[m] / 44100.00) * notes.get(m).getGain()), i);
+      }
     }
 
     //    if (timer > timeAtPlay[0] + 120) {
@@ -271,15 +294,16 @@ void draw() {
     //}
 
     //if (endIt) {
-    double[] a2 = new double[N + 1];
+    double a2 = 0;
 
     for (int i = 0; i <= N; i++) {
       for (int j = 0; j < 13; j++) {
-        a2[i]+=notes.get(j).getSine()[i];
+        a2+=notes.get(j).getSine(i);
       }
-      point(map(i, 0, N, 300, 1000), map((float)a2[i], -2, 2, 0, 300));
+      play(a2);
+      point(map(i, 0, N, 300, 1000), map((float)a2, -1, 1, 0, 300));
+      a2 = 0;
     }
-    play(a2);
 
     //println(hz1);
     //createNote = true;
@@ -485,12 +509,8 @@ void mouseReleased() {
   } else if (mouseX < 100 && mouseX > 50 && mouseY < 250 && mouseY > 200) {
     if (distort) {
       distort = false;
-      //ac.out.removeAllConnections(dist);
-      //ac.out.addInput(gain);
     } else if (distort == false) {
-      //distort = true;
-      //ac.out.removeAllConnections(gain);
-      //ac.out.addInput(dist);
+      distort = true;
     }
   } else if (mouseX < 150 && mouseX > 100 && mouseY < 250 && mouseY > 200) {
     if (doLFO) 
@@ -516,6 +536,32 @@ void mouseDragged() {
   }
 }
 
+void mouseWheel(MouseEvent event) {
+  float a = event.getCount();
+  if (mouseX < 250 && mouseX > 200) {
+    if (a >= 0) 
+      pitch += 50;
+    else 
+      pitch -= 50;
+  } else  if (mouseX < 300 && mouseX > 250) {
+    if (a >= 0) 
+      vol += 50;
+    else 
+      vol -= 50;
+  } else  if (mouseX < 350 && mouseX > 300) {
+    if (a >= 0) 
+      distVal += 50;
+    else 
+      distVal -= 50;
+  } else  if (mouseX < 400 && mouseX > 350) {
+    if (a >= 0) 
+      LFOval += 50;
+    else 
+      LFOval -= 50;
+  }
+}
+
+
 void mousePressed() {
   if (mouseX < 250 && mouseX > 200) {
     pitch = mouseY;
@@ -526,61 +572,74 @@ void mousePressed() {
 
 void keyPressed() {
   if (key == 's') {
-    notes.get(0).setStatus(true);
+    if (notes.get(0).getStatus() == 0 || notes.get(0).getStatus() == 4)
+      notes.get(0).setStatus(1);
   } else if (key == 'e') {
-    notes.get(1).setStatus(true);
+    if (notes.get(1).getStatus() == 0 || notes.get(1).getStatus() == 4)
+      notes.get(1).setStatus(1);
   } else if (key == 'd') {
-    notes.get(2).setStatus(true);
+    if (notes.get(2).getStatus() == 0 || notes.get(2).getStatus() == 4)
+      notes.get(2).setStatus(1);
   } else if (key == 'r') {
-    notes.get(3).setStatus(true);
+    if (notes.get(3).getStatus() == 0 || notes.get(3).getStatus() == 4)
+      notes.get(3).setStatus(1);
   } else if (key == 'f') {
-    notes.get(4).setStatus(true);
+    if (notes.get(4).getStatus() == 0 || notes.get(4).getStatus() == 4)
+      notes.get(4).setStatus(1);
   } else if (key == 'g') {
-    notes.get(5).setStatus(true);
+    if (notes.get(5).getStatus() == 0 || notes.get(5).getStatus() == 4)
+      notes.get(5).setStatus(1);
   } else if (key == 'y') {
-    notes.get(6).setStatus(true);
+    if (notes.get(6).getStatus() == 0 || notes.get(6).getStatus() == 4)
+      notes.get(6).setStatus(1);
   } else if (key == 'h') {
-    notes.get(7).setStatus(true);
+    if (notes.get(7).getStatus() == 0 || notes.get(7).getStatus() == 4)
+      notes.get(7).setStatus(1);
   } else if (key == 'u') {
-    notes.get(8).setStatus(true);
+    if (notes.get(8).getStatus() == 0 || notes.get(8).getStatus() == 4)
+      notes.get(8).setStatus(1);
   } else if (key == 'j') {
-    notes.get(9).setStatus(true);
+    if (notes.get(9).getStatus() == 0 || notes.get(9).getStatus() == 4)
+      notes.get(9).setStatus(1);
   } else if (key == 'i') {
-    notes.get(10).setStatus(true);
+    if (notes.get(10).getStatus() == 0 || notes.get(10).getStatus() == 4)
+      notes.get(10).setStatus(1);
   } else if (key == 'k') {
-    notes.get(11).setStatus(true);
+    if (notes.get(11).getStatus() == 0 || notes.get(11).getStatus() == 4)
+      notes.get(11).setStatus(1);
   } else if (key == 'l') {
-    notes.get(12).setStatus(true);
+    if (notes.get(12).getStatus() == 0 || notes.get(12).getStatus() == 4)
+      notes.get(12).setStatus(1);
   }
 }
 
 void keyReleased() {
   if (key == 's') {
-    notes.get(0).setStatus(false);
+    notes.get(0).setStatus(4);
   } else if (key == 'e') {
-    notes.get(1).setStatus(false);
+    notes.get(1).setStatus(4);
   } else if (key == 'd') {
-    notes.get(2).setStatus(false);
+    notes.get(2).setStatus(4);
   } else if (key == 'r') {
-    notes.get(3).setStatus(false);
+    notes.get(3).setStatus(4);
   } else if (key == 'f') {
-    notes.get(4).setStatus(false);
+    notes.get(4).setStatus(4);
   } else if (key == 'g') {
-    notes.get(5).setStatus(false);
+    notes.get(5).setStatus(4);
   } else if (key == 'y') {
-    notes.get(6).setStatus(false);
+    notes.get(6).setStatus(4);
   } else if (key == 'h') {
-    notes.get(7).setStatus(false);
+    notes.get(7).setStatus(4);
   } else if (key == 'u') {
-    notes.get(8).setStatus(false);
+    notes.get(8).setStatus(4);
   } else if (key == 'j') {
-    notes.get(9).setStatus(false);
+    notes.get(9).setStatus(4);
   } else if (key == 'i') {
-    notes.get(10).setStatus(false);
+    notes.get(10).setStatus(4);
   } else if (key == 'k') {
-    notes.get(11).setStatus(false);
+    notes.get(11).setStatus(4);
   } else if (key == 'l') {
-    notes.get(12).setStatus(false);
+    notes.get(12).setStatus(4);
   } else if (key == CODED) {
     if (keyCode == UP) {
       octo++;
@@ -589,7 +648,6 @@ void keyReleased() {
     }
   }
 }
-
 
 void begin() {
   try {
@@ -638,3 +696,4 @@ void play(double[] input) {
     play(input[i]);
   }
 }
+
