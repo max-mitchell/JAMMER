@@ -1,4 +1,3 @@
-import beads.*;
 import java.util.*;
 import processing.serial.*;
 import cc.arduino.*;
@@ -29,6 +28,8 @@ String inBack = "";
 
 float[] hzs;
 
+double lastSamp = 0;
+
 
 
 
@@ -47,7 +48,7 @@ final int SAMPLE_BUFFER_SIZE = 4096;
 SourceDataLine line1;   // to play the sound
 byte[] buffer;         // our internal buffer
 int bufferSize = 0;    // number of samples currently in internal buffer
-double noteTime = .031;
+double noteTime = .05;
 int N = (int) (44100.00 * noteTime);
 
 
@@ -74,7 +75,7 @@ float octo = 5;
 boolean distort = false;
 boolean doLFO = false;
 boolean LFOdown = true;
-int LFOmode = 1; //0 for Trem, 1 for Bass
+int LFOmode = 0; //0 for Trem, 1 for Bass
 
 PImage conor = new PImage();
 int move = 0;
@@ -146,9 +147,12 @@ void draw() {
 
   if (createNote) {
     if (endIt == false) {
+
       for (int i = 0; i < 13; i++) {
         notes.add(new Note(new double[N+1], i));
       }
+
+
       createNote = false;
       endIt = true;
     } else if (endIt) {
@@ -185,6 +189,18 @@ void draw() {
 
   if (endIt) {
 
+    hzs = new float[13];
+
+    for (int j = 0; j < 13; j++) {
+      hzs[j] = (16.35*pow(((pitch/30.0)+(halfStep*(float)j))/12.0+octo, 2));
+    }
+
+    for (int i = 0; i <= N; i++) {
+      for (int j = 0; j < 13; j++) {
+        notes.get(j).setSine(Math.sin(2 * Math.PI * i * hzs[j] / 44100.00), i);
+      }
+    }
+
     if (doLFO) {
       if (LFOmode == 0) {
         if (LFOdown) {
@@ -212,12 +228,6 @@ void draw() {
           //pitch -= 101;
         }
       }
-    }
-
-    hzs = new float[notes.size()];
-
-    for (int j = 0; j < 13; j++) {
-      hzs[j] = (16.35*pow(((pitch/30.0)+(halfStep*(float)j))/12.0+octo, 2));
     }
 
     for (int m = 0; m < 13; m++) {
@@ -266,19 +276,34 @@ void draw() {
 
 
       //
+    }
 
 
-      for (int i = 0; i <= N; i++) {
+
+
+    for (int i = 0; i <= N; i++) {
+      double a2 = 0;
+      for (int m = 0; m < 13; m++) {
+
         if (distort) {
-          if ((Math.sin(2 * Math.PI * i * hzs[m] / 44100.00) * notes.get(m).getGain()) > distMax) {
-            notes.get(m).setSine(distMax, i);
-          } else if ((Math.sin(2 * Math.PI * i * hzs[m] / 44100.00) * notes.get(m).getGain()) < -distMax) {
-            notes.get(m).setSine(-distMax, i);
+          if ((notes.get(m).getSine(i) * notes.get(m).getGain()) > distMax) {
+            a2+=distMax;
+          } else if ((notes.get(m).getSine(i) * notes.get(m).getGain()) < -distMax) {
+            a2+=-distMax;
           } else 
-          notes.get(m).setSine((Math.sin(2 * Math.PI * i * hzs[m] / 44100.00) * notes.get(m).getGain()), i);
+            a2+=notes.get(m).getSine(i) * notes.get(m).getGain();
         } else 
-          notes.get(m).setSine((Math.sin(2 * Math.PI * i * hzs[m] / 44100.00) * notes.get(m).getGain()), i);
+          a2+=notes.get(m).getSine(i) * notes.get(m).getGain();
       }
+      play(a2);
+
+      if (i % 5 == 0 && i > 0) {
+        line(map(i, 0, N, 300, 1000), map((float)a2, -1, 1, 0, 300), 
+        map(i-5, 0, N, 300, 1000), map((float)lastSamp, -1, 1, 0, 300));
+
+        lastSamp = a2;
+      }
+      a2 = 0;
     }
 
     //    if (timer > timeAtPlay[0] + 120) {
@@ -294,16 +319,21 @@ void draw() {
     //}
 
     //if (endIt) {
-    double a2 = 0;
-
-    for (int i = 0; i <= N; i++) {
-      for (int j = 0; j < 13; j++) {
-        a2+=notes.get(j).getSine(i);
-      }
-      play(a2);
-      point(map(i, 0, N, 300, 1000), map((float)a2, -1, 1, 0, 300));
-      a2 = 0;
-    }
+    /*double a2 = 0;
+     
+     for (int i = 0; i <= N; i++) {
+     for (int j = 0; j < 13; j++) {
+     a2+=notes.get(j).getSine(i);
+     }
+     play(a2);
+     if (i % 10 == 0 && i > 0) {
+     line(map(i, 0, N, 300, 1000), map((float)a2, -1, 1, 0, 300), 
+     map(i-10, 0, N, 300, 1000), map((float)lastSamp, -1, 1, 0, 300));
+     
+     lastSamp = a2;
+     }
+     a2 = 0;
+     }*/
 
     //println(hz1);
     //createNote = true;
@@ -498,9 +528,6 @@ void draw() {
   rect(325, map(distVal, 0, 1024, 0, 300), 25, 25);
   rect(375, map(LFOval, 0, 1024, 0, 300), 25, 25);
   rectMode(CORNER);
-
-
-  gainValue = 0;
 }
 
 void mouseReleased() {
@@ -696,4 +723,3 @@ void play(double[] input) {
     play(input[i]);
   }
 }
-
