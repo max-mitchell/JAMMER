@@ -48,8 +48,9 @@ final int SAMPLE_BUFFER_SIZE = 4096;
 SourceDataLine line1;   // to play the sound
 byte[] buffer;         // our internal buffer
 int bufferSize = 0;    // number of samples currently in internal buffer
-double noteTime = .05;
+double noteTime = .03;
 int N = (int) (44100.00 * noteTime);
+
 
 
 
@@ -71,7 +72,7 @@ float LFOmod = 0;
 float maxAmp = 0;
 float maxPit = 0;
 boolean change = false;
-float octo = 5;
+float octo = 0;
 boolean distort = false;
 boolean doLFO = false;
 boolean LFOdown = true;
@@ -85,6 +86,8 @@ boolean doTheThing = false;
 
 double a2[];
 
+String keyboard = "q2we4r5ty7u8i9op-[=zxdcfvgbnjmk,.;/' ";
+
 double sendToArd = 0;
 float halfStep = 0;
 float stepCount = 12;
@@ -97,7 +100,7 @@ void setup() {
   println(Serial.list());
   //arduino = new Arduino(this, Arduino.list()[1], 57600);  //other inputs
   //port = new Serial(this, Serial.list()[0], 9600);  //trellis
-  conor = loadImage("maliha.jpg");
+  //conor = loadImage("maliha.jpg");
 }
 
 void draw() {
@@ -109,7 +112,7 @@ void draw() {
   fill(255);
   rect(300, 0, 700, 300);
   fill(0);
-  text((int)(16.35*pow((pitch/30.0)/12.0+octo, 2)), 500, 20);
+  text((int)(440.0*pow((pitch/30.0)/12.0+octo, 2)), 500, 20);
   text(gainValue, 500, 40);
   //text(dist.getMaximum(), 500, 60);
   text(LFOmod, 500, 80);
@@ -148,9 +151,29 @@ void draw() {
   if (createNote) {
     if (endIt == false) {
 
-      for (int i = 0; i < 13; i++) {
-        notes.add(new Note(new double[N+1], i));
+      hzs = new float[13];
+
+      for (int j = 0; j < 13; j++) {
+        hzs[j] = 440.0*pow(1.05956, j-12);//((pitch/30.0)+(halfStep*(float)j))/12.0, 2));
       }
+
+      for (int i = 0; i < 13; i++) {
+        notes.add(new Note(new double[(int)(44100.0/hzs[i])+1], hzs[i], i));
+        notes.get(i).load();
+        //println(notes.get(i).out());
+      }
+
+
+
+      /*for (int i = 0; i <= N; i++) {
+       for (int j = 0; j < 13; j++) {
+       notes.get(j).setSine(Math.sin(2 * Math.PI * i * hzs[j] / 44100.0), i);
+       if (i == 0)
+       println(notes.get(j).getSine(i)+"  at 0");
+       else if (i == N)
+       println(notes.get(j).getSine(i)+"  at "+N);
+       }
+       }*/
 
 
       createNote = false;
@@ -183,23 +206,20 @@ void draw() {
   distMax = map(distVal, 0, 1024, 1, 0);
 
   if (doLFO == false) {
-    gainValue = map(vol, 1024, 0, 0, .8);
+    gainValue = map(vol, 1024, 0, 0, .2);
   }
 
 
   if (endIt) {
 
+
     hzs = new float[13];
 
     for (int j = 0; j < 13; j++) {
-      hzs[j] = (16.35*pow(((pitch/30.0)+(halfStep*(float)j))/12.0+octo, 2));
+      hzs[j] = 440.0*pow(1.05956, (j+12*octo)-12);//(440.0*pow(((pitch/30.0)+(halfStep*(float)j))/12.0+octo, 2));
     }
 
-    for (int i = 0; i <= N; i++) {
-      for (int j = 0; j < 13; j++) {
-        notes.get(j).setSine(Math.sin(2 * Math.PI * i * hzs[j] / 44100.00), i);
-      }
-    }
+
 
     if (doLFO) {
       if (LFOmode == 0) {
@@ -233,11 +253,22 @@ void draw() {
     for (int m = 0; m < 13; m++) {
 
 
+
       if (notes.get(m).getStatus() == 1) {
+        notes.set(m, new Note(new double[(int)(44100.0/hzs[m])+1], hzs[m], m));
+        notes.get(m).load();
+        notes.get(m).setStatus(10);
+      } 
+
+      //
+
+
+      else if (notes.get(m).getStatus() == 10) {
         notes.get(m).setGain(notes.get(m).getGain()+gainValue*.4);
         if (notes.get(m).getGain() >= gainValue+gainValue*.2)
           notes.get(m).setStatus(2);
-      } 
+      }
+
 
       //
 
@@ -276,6 +307,8 @@ void draw() {
 
 
       //
+
+     // println(notes.get(m).getStatus());
     }
 
 
@@ -286,15 +319,16 @@ void draw() {
       for (int m = 0; m < 13; m++) {
 
         if (distort) {
-          if ((notes.get(m).getSine(i) * notes.get(m).getGain()) > distMax) {
+          if ((notes.get(m).sample() * notes.get(m).getGain()) > distMax) {
             a2+=distMax;
-          } else if ((notes.get(m).getSine(i) * notes.get(m).getGain()) < -distMax) {
+          } else if ((notes.get(m).sample() * notes.get(m).getGain()) < -distMax) {
             a2+=-distMax;
           } else 
-            a2+=notes.get(m).getSine(i) * notes.get(m).getGain();
+            a2+=notes.get(m).sample() * notes.get(m).getGain();
         } else 
-          a2+=notes.get(m).getSine(i) * notes.get(m).getGain();
+          a2+=notes.get(m).sample() * notes.get(m).getGain();
       }
+
       play(a2);
 
       if (i % 5 == 0 && i > 0) {
@@ -303,8 +337,14 @@ void draw() {
 
         lastSamp = a2;
       }
-      a2 = 0;
+
+      for (int m = 0; m < 13; m++) {
+        notes.get(m).tic();
+      }
+      //println(notes.get(12).out());
     }
+
+
 
     //    if (timer > timeAtPlay[0] + 120) {
     //      drumming = false;
@@ -467,7 +507,7 @@ void draw() {
   -20.0*sin(Vmapped) + 400, 20.0*cos(Vmapped) + 350);
 
   fill(43, 153, 224);
-  text(map(vol, 1024, 0, 0, .8), 400, 350);
+  text(map(vol, 1024, 0, 0, .2), 400, 350);
   text("Volume", 400, 315);
 
 
