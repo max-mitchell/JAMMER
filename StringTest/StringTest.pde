@@ -36,14 +36,11 @@ String keyboard = "q2we4r5ty7u8i9op-[=zxdcfvgbnjmk,.;/' ";
 
 void setup() {
   begin();
+  size(600, 100);
 
-  strings[0] = new GuitarString(110.0);
-  strings[0].pluck();
-  double startPitch = 110.0;
 
-  for (int i = 1; i < strings.length; i++) {
-    startPitch *= Math.pow(2, 1.0/12.0);
-    strings[i] = new GuitarString(startPitch);
+  for (int i = 0; i < strings.length; i++) {
+    strings[i] = new GuitarString(440*pow(1.05956, i-24));
     strings[i].pluck();
   }
 
@@ -80,13 +77,20 @@ void setup() {
 
 
 void draw() {
-  // compute the superposition of samples
+  double lastSamp = 0;
+  background(255);
   for (int i = 0; i < N; i++) {
     double sample = 0;
     for (int m = 0; m < strings.length; m++) {
       sample += strings[m].sample();
     }
     play(sample);
+    if (i % 5 == 0 && i > 0) {
+      line(map(i, 0, N, 0, 600), map((float)sample, -1, 1, 0, 100), 
+      map(i-5, 0, N, 0, 600), map((float)lastSamp, -1, 1, 0, 100));
+
+      lastSamp = sample;
+    }
 
     for (int m = 0; m < strings.length; m++) {
       strings[m].tic();
@@ -96,8 +100,10 @@ void draw() {
 
 
 void keyPressed() {
-  if (keyboard.indexOf(key) != -1)
+  if (keyboard.indexOf(key) != -1) {
+
     strings[keyboard.indexOf(key)].pluck();
+  }
 }
 
 
