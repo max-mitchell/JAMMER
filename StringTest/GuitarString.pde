@@ -64,7 +64,7 @@ public class GuitarString {
     f2 = buffer.peek();
 
     toLast = .5 * (f1+f2) * (double)map(size, 441, 0, .99, 1);//.994;
-    buffer.enqueue(toLast);
+      buffer.enqueue(toLast);
   }
 
   // return the current sample
