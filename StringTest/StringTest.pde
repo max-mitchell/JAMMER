@@ -36,7 +36,7 @@ String keyboard = "q2we4r5ty7u8i9op-[=zxdcfvgbnjmk,.;/' ";
 
 void setup() {
   begin();
-  size(600, 100);
+  size(700, 300);
 
 
   for (int i = 0; i < strings.length; i++) {
@@ -86,8 +86,8 @@ void draw() {
     }
     play(sample);
     if (i % 5 == 0 && i > 0) {
-      line(map(i, 0, N, 0, 600), map((float)sample, -1, 1, 0, 100), 
-      map(i-5, 0, N, 0, 600), map((float)lastSamp, -1, 1, 0, 100));
+      line(map(i, 0, N, 0, width), map((float)sample, -1, 1, 0, height), 
+      map(i-5, 0, N, 0, width), map((float)lastSamp, -1, 1, 0, height));
 
       lastSamp = sample;
     }
