@@ -6,9 +6,16 @@ import java.io.*;
 import java.net.*;
 import javax.sound.sampled.*;
 
-ArrayList<Note> notes = new ArrayList<Note>();
+ArrayList<Music> notes = new ArrayList<Music>();
+ArrayList<Double> rec = new ArrayList<Double>();
+ArrayList<Double[]> stored = new ArrayList<Double[]>();
+ArrayList<Boolean> stoPlay = new ArrayList<Boolean>();
+ArrayList<Integer> playCount = new ArrayList<Integer>();
 int[] timeAtPlay = new int[12];
 boolean drumming = false;
+
+boolean recording = false;
+int recCount = 0;
 
 Arduino arduino;
 Serial port;
@@ -53,13 +60,17 @@ int N = (int) (44100.00 * noteTime);
 
 
 
-
+int soundMode = 0;
 
 
 color hue1 = color(160);
 color hue2 = color(160);
 color hue3 = color(160);
-boolean createNote = false;
+color stro1 = color(220);
+color stro2 = color(220);
+color stro3 = color(220);
+color stro4 = color(220);
+boolean createNote = true;
 boolean endIt = false;
 int place = 0;
 int pitch = 200;
@@ -86,7 +97,8 @@ boolean doTheThing = false;
 
 double a2[];
 
-String keyboard = "q2we4r5ty7u8i9op-[=zxdcfvgbnjmk,.;/' ";
+String keyboard = "sedrfgyhujikl";
+String nums = "1234567890";
 
 double sendToArd = 0;
 float halfStep = 0;
@@ -97,10 +109,10 @@ void setup() {
   size(1000, 700);
   background(20, 70, 200);
   println(Arduino.list());
-  println(Serial.list());
   //arduino = new Arduino(this, Arduino.list()[1], 57600);  //other inputs
-  //port = new Serial(this, Serial.list()[0], 9600);  //trellis
+  port = new Serial(this, Serial.list()[1], 9600);  //trellis
   //conor = loadImage("maliha.jpg");
+  //frameRate(200);
 }
 
 void draw() {
@@ -112,7 +124,7 @@ void draw() {
   fill(255);
   rect(300, 0, 700, 300);
   fill(0);
-  text((int)(440.0*pow((pitch/30.0)/12.0+octo, 2)), 500, 20);
+  text(440.0*pow(1.05956, (12*octo)-12), 500, 20);
   text(gainValue, 500, 40);
   //text(dist.getMaximum(), 500, 60);
   text(LFOmod, 500, 80);
@@ -138,6 +150,26 @@ void draw() {
     hue3 = color(160);
   }
 
+  if (mouseX < 250 && mouseX > 200) 
+    stro1 = color(220);
+  else 
+    stro1 = color(0);
+
+  if (mouseX < 300 && mouseX > 250) 
+    stro2 = color(220);
+  else 
+    stro2 = color(0);
+
+  if (mouseX < 350 && mouseX > 300) 
+    stro3 = color(220);
+  else 
+    stro3 = color(0);
+
+  if (mouseX < 400 && mouseX > 350) 
+    stro4 = color(220);
+  else 
+    stro4 = color(0);
+
   LFOmod = map(LFOval, 0, 300, .1, 0);
 
 
@@ -157,10 +189,18 @@ void draw() {
         hzs[j] = 440.0*pow(1.05956, j-12);//((pitch/30.0)+(halfStep*(float)j))/12.0, 2));
       }
 
-      for (int i = 0; i < 13; i++) {
-        notes.add(new Note(new double[(int)(44100.0/hzs[i])+1], hzs[i], i));
-        notes.get(i).load();
-        //println(notes.get(i).out());
+      if (soundMode == 0) {
+        for (int i = 0; i < 13; i++) {
+          notes.add(new Note(new double[(int)(44100.0/hzs[i])+1], hzs[i], i));
+          notes.get(i).pluck();
+          //println(notes.get(i).out());
+        }
+      } else if (soundMode == 1) {
+        for (int i = 0; i < 13; i++) {
+          notes.add(new GuitarString(hzs[i], i));
+          notes.get(i).pluck();
+          //println(notes.get(i).out());
+        }
       }
 
 
@@ -206,11 +246,13 @@ void draw() {
   distMax = map(distVal, 0, 1024, 1, 0);
 
   if (doLFO == false) {
-    gainValue = map(vol, 1024, 0, 0, .2);
+    gainValue = map(vol, 1024, 0, 0, .8);
   }
 
 
   if (endIt) {
+
+    //println(soundMode);
 
 
     hzs = new float[13];
@@ -255,9 +297,15 @@ void draw() {
 
 
       if (notes.get(m).getStatus() == 1) {
-        notes.set(m, new Note(new double[(int)(44100.0/hzs[m])+1], hzs[m], m));
-        notes.get(m).load();
-        notes.get(m).setStatus(10);
+        if (soundMode == 0) {
+          notes.set(m, new Note(new double[(int)(44100.0/hzs[m])+1], hzs[m], m));
+          notes.get(m).setStatus(10);
+        } else if (soundMode == 1) {
+          notes.set(m, (new GuitarString(hzs[m], m)));
+          notes.get(m).setStatus(0);
+          notes.get(m).setGain(gainValue);
+        }
+        notes.get(m).pluck();
       } 
 
       //
@@ -302,13 +350,14 @@ void draw() {
 
 
       else if (notes.get(m).getStatus() == 0) {
-        notes.get(m).setGain(0);
+        if (soundMode == 0)
+          notes.get(m).setGain(0);
       }
 
 
       //
 
-     // println(notes.get(m).getStatus());
+      // println(notes.get(m).getStatus());
     }
 
 
@@ -329,7 +378,22 @@ void draw() {
           a2+=notes.get(m).sample() * notes.get(m).getGain();
       }
 
+      for (int j = 0; j < stored.size(); j++) {
+        if (stoPlay.get(j) == true) {
+          if (i+playCount.get(j) < stored.get(j).length) {
+            a2+=stored.get(j)[i+playCount.get(j)];
+          } else {
+            stoPlay.set(j, false);
+            break;
+          }
+        }
+      }
+
       play(a2);
+
+      if (recording) {
+        rec.add(a2);
+      }
 
       if (i % 5 == 0 && i > 0) {
         line(map(i, 0, N, 300, 1000), map((float)a2, -1, 1, 0, 300), 
@@ -342,6 +406,11 @@ void draw() {
         notes.get(m).tic();
       }
       //println(notes.get(12).out());
+    }
+    for (int j = 0; j < stored.size(); j++) {
+      if (stoPlay.get(j) == true) {
+        playCount.set(j, playCount.get(j)+N);
+      }
     }
 
 
@@ -432,63 +501,40 @@ void draw() {
 
 
 
-  /* if (port.available() > 0) {
-   
-   String tempIn = "";
-   
-   in = port.readString();
-   
-   
-   if (in.length() == 4) {
-   println(in+"  in");
-   for (int i = 0; i < in.length(); i++) {
-   if (in.substring(i, i+1).equals(null));
-   else {
-   tempIn += in.substring(i, i+1);
-   }
-   }
-   Tval = Integer.parseInt(tempIn);
-   } 
-   
-   if (lookBack) {
-   for (int i = 0; i < in.length(); i++) {
-   inBack += in.substring(i, i+1)+"";
-   }
-   lookBack = false;
-   println(inBack+"    inBack");
-   for (int i = 0; i < inBack.length(); i++) {
-   if (inBack.substring(i, i+1).equals(null));
-   else {
-   tempIn += inBack.substring(i, i+1);
-   }
-   }
-   Tval = Integer.parseInt(tempIn);
-   }
-   
-   if (in.length() != 0 && in.length() < 4) {
-   lookBack = true;
-   inBack = in;
-   }
-   }
-   
-   for (int i = 0; i < buttons.length; i++) {
-   if (i == Tval) {
-   buttons[i] = true;
-   Wasbuttons[i] = true;
-   } else {
-   if (timer % 20 == 0) {
-   Wasbuttons[i] = false;
-   buttons[i] = false;
-   }
-   }
-   }  */
+  if (port.available() > 0) {
+    in = port.readString();
+    String tempIn = "";
+    //println(in + "|" + in.length());
+    for (int i = 0; i < in.length(); i++) {
+      if (nums.indexOf(in.charAt(i)) != -1) {
+        tempIn+=in.substring(i, i+1);
+      }
+    }
+    if (tempIn.length() == 2) {
+      Tval = Integer.parseInt(tempIn);
+    }
+  }
+
+  for (int i = 0; i < buttons.length; i++) {
+    if (i == Tval) {
+      buttons[i] = true;
+      Wasbuttons[i] = true;
+    } else {
+      if (timer % 4 == 0) {
+        if (Wasbuttons[i])
+          Wasbuttons[i] = false;
+        else
+          buttons[i] = false;
+      }
+    }
+  }  
 
 
 
 
 
   float Vmapped = map(map(vol, 1024, 0, 0, .8), 0, .8, 0, 2*(float)Math.PI);
-  float Pmapped = map((int)(16.35*pow((pitch/30.0)/12.0+octo, 2)), 0, 2000, 0, 2*(float)Math.PI);
+  float Pmapped = map(440.0*pow(1.05956, (12*octo)-12), 0, 2000, 0, 2*(float)Math.PI);
 
 
   textAlign(CENTER);
@@ -524,7 +570,7 @@ void draw() {
   -20.0*sin(Pmapped) + 300, 20.0*cos(Pmapped) + 350);
 
   fill(43, 153, 224);
-  text((int)(16.35*pow((pitch/30.0)/12.0+octo, 2)), 300, 350);
+  text((int)(440.0*pow(1.05956, (12*octo)-12)), 300, 350);
   text("Pitch", 300, 315);
 
   noStroke();
@@ -539,10 +585,22 @@ void draw() {
       y+=50;
       x++;
     }
-    if (buttons[i])
+    if (buttons[i]) {
+      if (i < 13) {
+        if (soundMode == 0) {
+          if (notes.get(i).getStatus() == 0 || notes.get(i).getStatus() == 4)
+            notes.get(i).setStatus(1);
+        } else if (soundMode == 1) {
+          notes.get(i).setStatus(1);
+        }
+      }
       fill(255);
-    else 
+    } else {
+      if (i < 13) {
+        notes.get(i).setStatus(4);
+      }
       fill(50);
+    }
     rect(map(i-(16*x), 0, 15, 40, 450), 300+y, 20, 20);
   }
 
@@ -562,12 +620,41 @@ void draw() {
   rect(300, 0, 50, 300);
   rect(350, 0, 50, 300);
   fill(0);
+  text("On/Off", 100, 100);
+  text("Distort", 75, 225);
+  text("LFO", 125, 225);
   rectMode(CENTER);
+  stroke(stro1);
   rect(225, map(pitch, 0, 1024, 0, 300), 25, 25);
+  stroke(stro2);
   rect(275, map(vol, 0, 1024, 0, 300), 25, 25);
+  stroke(stro3);
   rect(325, map(distVal, 0, 1024, 0, 300), 25, 25);
+  stroke(stro4);
   rect(375, map(LFOval, 0, 1024, 0, 300), 25, 25);
+  stroke(0);
   rectMode(CORNER);
+  if (recording)
+    fill(255, 0, 0);
+  else 
+    fill(0);
+  ellipse(40, 330, 20, 20);
+  text("REC", 65, 330);
+  if (doLFO)
+    fill(255, 0, 0);
+  else 
+    fill(20, 70, 200);
+  ellipse(160, 225, 10, 10);
+  if (distort)
+    fill(255, 0, 0);
+  else 
+    fill(20, 70, 200);
+  ellipse(40, 225, 10, 10);
+  if (endIt)
+    fill(255, 0, 0);
+  else 
+    fill(20, 70, 200);
+  ellipse(40, 60, 10, 10);
 }
 
 void mouseReleased() {
@@ -584,8 +671,8 @@ void mouseReleased() {
       doLFO = false; 
     else {
       doLFO = true;
-      //maxAmp = gain.getGain();
-      //maxPit = 16.35*pow((pitch/30.0)/12.0+octo, 2);
+      maxAmp = gainValue;
+      maxPit = 16.35*pow((pitch/30.0)/12.0+octo, 2);
       println(maxPit);
     }
   }
@@ -638,80 +725,52 @@ void mousePressed() {
 }
 
 void keyPressed() {
-  if (key == 's') {
-    if (notes.get(0).getStatus() == 0 || notes.get(0).getStatus() == 4)
-      notes.get(0).setStatus(1);
-  } else if (key == 'e') {
-    if (notes.get(1).getStatus() == 0 || notes.get(1).getStatus() == 4)
-      notes.get(1).setStatus(1);
-  } else if (key == 'd') {
-    if (notes.get(2).getStatus() == 0 || notes.get(2).getStatus() == 4)
-      notes.get(2).setStatus(1);
-  } else if (key == 'r') {
-    if (notes.get(3).getStatus() == 0 || notes.get(3).getStatus() == 4)
-      notes.get(3).setStatus(1);
-  } else if (key == 'f') {
-    if (notes.get(4).getStatus() == 0 || notes.get(4).getStatus() == 4)
-      notes.get(4).setStatus(1);
-  } else if (key == 'g') {
-    if (notes.get(5).getStatus() == 0 || notes.get(5).getStatus() == 4)
-      notes.get(5).setStatus(1);
-  } else if (key == 'y') {
-    if (notes.get(6).getStatus() == 0 || notes.get(6).getStatus() == 4)
-      notes.get(6).setStatus(1);
-  } else if (key == 'h') {
-    if (notes.get(7).getStatus() == 0 || notes.get(7).getStatus() == 4)
-      notes.get(7).setStatus(1);
-  } else if (key == 'u') {
-    if (notes.get(8).getStatus() == 0 || notes.get(8).getStatus() == 4)
-      notes.get(8).setStatus(1);
-  } else if (key == 'j') {
-    if (notes.get(9).getStatus() == 0 || notes.get(9).getStatus() == 4)
-      notes.get(9).setStatus(1);
-  } else if (key == 'i') {
-    if (notes.get(10).getStatus() == 0 || notes.get(10).getStatus() == 4)
-      notes.get(10).setStatus(1);
-  } else if (key == 'k') {
-    if (notes.get(11).getStatus() == 0 || notes.get(11).getStatus() == 4)
-      notes.get(11).setStatus(1);
-  } else if (key == 'l') {
-    if (notes.get(12).getStatus() == 0 || notes.get(12).getStatus() == 4)
-      notes.get(12).setStatus(1);
+  if (keyboard.indexOf(key) != -1) {
+    if (soundMode == 0) {
+      if (notes.get(keyboard.indexOf(key)).getStatus() == 0 || notes.get(keyboard.indexOf(key)).getStatus() == 4)
+        notes.get(keyboard.indexOf(key)).setStatus(1);
+    } else if (soundMode == 1) {
+      notes.get(keyboard.indexOf(key)).setStatus(1);
+    }
+  } else if (key == '1') {
+    stoPlay.set(0, true);
+    playCount.set(0, 0);
+  } else if (key == '2') {
+    stoPlay.set(1, true);
+    playCount.set(1, 0);
+  } else if (key == '3') {
+    stoPlay.set(2, true);
+    playCount.set(2, 0);
   }
 }
 
 void keyReleased() {
-  if (key == 's') {
-    notes.get(0).setStatus(4);
-  } else if (key == 'e') {
-    notes.get(1).setStatus(4);
-  } else if (key == 'd') {
-    notes.get(2).setStatus(4);
-  } else if (key == 'r') {
-    notes.get(3).setStatus(4);
-  } else if (key == 'f') {
-    notes.get(4).setStatus(4);
-  } else if (key == 'g') {
-    notes.get(5).setStatus(4);
-  } else if (key == 'y') {
-    notes.get(6).setStatus(4);
-  } else if (key == 'h') {
-    notes.get(7).setStatus(4);
-  } else if (key == 'u') {
-    notes.get(8).setStatus(4);
-  } else if (key == 'j') {
-    notes.get(9).setStatus(4);
-  } else if (key == 'i') {
-    notes.get(10).setStatus(4);
-  } else if (key == 'k') {
-    notes.get(11).setStatus(4);
-  } else if (key == 'l') {
-    notes.get(12).setStatus(4);
+  if (keyboard.indexOf(key) != -1) {
+    notes.get(keyboard.indexOf(key)).setStatus(4);
+  } else if (key == '?') {
+    if (recording) {
+      recording = false;
+      stored.add(new Double[rec.size()]);
+      stoPlay.add(false);
+      playCount.add(0);
+      for (int i = 0; i < rec.size(); i++) {
+        stored.get(recCount)[i] = rec.get(i);
+      }
+      recCount++;
+      rec.clear();
+    } else {
+      recording = true;
+    }
   } else if (key == CODED) {
     if (keyCode == UP) {
       octo++;
     } else if (keyCode == DOWN) {
       octo--;
+    } else if (keyCode == ALT) {
+      if (soundMode == 0)
+        soundMode = 1;
+      else 
+        soundMode = 0;
     }
   }
 }
