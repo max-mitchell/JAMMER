@@ -1,4 +1,4 @@
-public class Note {
+public class Note implements Music {
 
   private double[] vals;
   private RingBuffer buffer;
@@ -28,7 +28,7 @@ public class Note {
   }
 
 
-  public void load() {
+  public void pluck() {
     while (buffer.size () > 0) {
       buffer.dequeue();
     }
