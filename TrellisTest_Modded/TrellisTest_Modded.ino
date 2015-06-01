@@ -93,7 +93,6 @@ void setup() {
     trellis.writeDisplay();  
     if (i < numKeys) { 
       on[i] = false;
-      butNum[i]+="00";
       if (i < 10){
         butNum[i]+="0"; 
       } 
@@ -174,6 +173,7 @@ void loop() {
   for (uint8_t i=0; i<numKeys; i++) {
     if (on[i]){
       Serial.println(butNum[i]);
+      delay(60);
     } 
   }
 
@@ -204,7 +204,6 @@ void loop() {
 
 
 }
-
 
 
 
