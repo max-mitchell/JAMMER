@@ -80,13 +80,13 @@ float distMax, distMin = 0;
 float distVal = 50;
 float LFOval = 50;
 float LFOmod = 0;
+boolean LFOdown = false;
 float maxAmp = 0;
 float maxPit = 0;
 boolean change = false;
 float octo = 0;
 boolean distort = false;
 boolean doLFO = false;
-boolean LFOdown = true;
 int LFOmode = 0; //0 for Trem, 1 for Bass
 
 PImage conor = new PImage();
@@ -97,7 +97,7 @@ boolean doTheThing = false;
 
 double a2[];
 
-String keyboard = "sedrfgyhujikl";
+String keyboard = "q2we4r5ty7u8i9op-[=zxdcfvgbnjmk,.;/' ";
 String nums = "1234567890";
 
 double sendToArd = 0;
@@ -110,7 +110,7 @@ void setup() {
   background(20, 70, 200);
   println(Arduino.list());
   //arduino = new Arduino(this, Arduino.list()[1], 57600);  //other inputs
-  port = new Serial(this, Serial.list()[1], 9600);  //trellis
+  port = new Serial(this, Serial.list()[0], 9600);  //trellis
   //conor = loadImage("maliha.jpg");
   //frameRate(200);
 }
@@ -170,7 +170,7 @@ void draw() {
   else 
     stro4 = color(0);
 
-  LFOmod = map(LFOval, 0, 300, .1, 0);
+  LFOmod = map(LFOval, 0, 300, 10, 0);
 
 
 
@@ -183,14 +183,14 @@ void draw() {
   if (createNote) {
     if (endIt == false) {
 
-      hzs = new float[13];
+      hzs = new float[37];
 
-      for (int j = 0; j < 13; j++) {
+      for (int j = 0; j < hzs.length; j++) {
         hzs[j] = 440.0*pow(1.05956, j-12);//((pitch/30.0)+(halfStep*(float)j))/12.0, 2));
       }
 
       if (soundMode == 0) {
-        for (int i = 0; i < 13; i++) {
+        for (int i = 0; i < 37; i++) {
           notes.add(new Note(new double[(int)(44100.0/hzs[i])+1], hzs[i], i));
           notes.get(i).pluck();
           //println(notes.get(i).out());
@@ -255,9 +255,9 @@ void draw() {
     //println(soundMode);
 
 
-    hzs = new float[13];
+    hzs = new float[37];
 
-    for (int j = 0; j < 13; j++) {
+    for (int j = 0; j < hzs.length; j++) {
       hzs[j] = 440.0*pow(1.05956, (j+12*octo)-12);//(440.0*pow(((pitch/30.0)+(halfStep*(float)j))/12.0+octo, 2));
     }
 
@@ -276,23 +276,10 @@ void draw() {
         } else if (gainValue > maxAmp) {
           LFOdown = true;
         }
-      } else if (LFOmode == 1) {
-        if (LFOdown) {
-          pitch -= map(LFOval, 0, 300, 250, 0);
-        } else if (LFOdown == false) {
-          pitch += map(LFOval, 0, 300, 250, 0);
-        }
-
-        if (16.35*pow((pitch/30.0)/12.0+octo, 2) < 50) {
-          LFOdown = false;
-        } else if (16.35*pow((pitch/30.0)/12.0+octo, 2) > maxPit) {
-          LFOdown = true;
-          //pitch -= 101;
-        }
       }
     }
 
-    for (int m = 0; m < 13; m++) {
+    for (int m = 0; m < notes.size (); m++) {
 
 
 
@@ -302,11 +289,11 @@ void draw() {
           notes.get(m).setStatus(10);
         } else if (soundMode == 1) {
           notes.set(m, (new GuitarString(hzs[m], m)));
-          notes.get(m).setStatus(0);
+          notes.get(m).setStatus(99);
           notes.get(m).setGain(gainValue);
         }
         notes.get(m).pluck();
-      } 
+      }
 
       //
 
@@ -365,7 +352,7 @@ void draw() {
 
     for (int i = 0; i <= N; i++) {
       double a2 = 0;
-      for (int m = 0; m < 13; m++) {
+      for (int m = 0; m < notes.size (); m++) {
 
         if (distort) {
           if ((notes.get(m).sample() * notes.get(m).getGain()) > distMax) {
@@ -378,7 +365,7 @@ void draw() {
           a2+=notes.get(m).sample() * notes.get(m).getGain();
       }
 
-      for (int j = 0; j < stored.size(); j++) {
+      for (int j = 0; j < stored.size (); j++) {
         if (stoPlay.get(j) == true) {
           if (i+playCount.get(j) < stored.get(j).length) {
             a2+=stored.get(j)[i+playCount.get(j)];
@@ -388,6 +375,8 @@ void draw() {
           }
         }
       }
+
+
 
       play(a2);
 
@@ -402,12 +391,12 @@ void draw() {
         lastSamp = a2;
       }
 
-      for (int m = 0; m < 13; m++) {
+      for (int m = 0; m < notes.size (); m++) {
         notes.get(m).tic();
       }
       //println(notes.get(12).out());
     }
-    for (int j = 0; j < stored.size(); j++) {
+    for (int j = 0; j < stored.size (); j++) {
       if (stoPlay.get(j) == true) {
         playCount.set(j, playCount.get(j)+N);
       }
@@ -505,7 +494,7 @@ void draw() {
     in = port.readString();
     String tempIn = "";
     //println(in + "|" + in.length());
-    for (int i = 0; i < in.length(); i++) {
+    for (int i = 0; i < in.length (); i++) {
       if (nums.indexOf(in.charAt(i)) != -1) {
         tempIn+=in.substring(i, i+1);
       }
@@ -597,7 +586,7 @@ void draw() {
       fill(255);
     } else {
       if (i < 13) {
-        notes.get(i).setStatus(4);
+        //notes.get(i).setStatus(4);
       }
       fill(50);
     }
@@ -730,15 +719,16 @@ void keyPressed() {
       if (notes.get(keyboard.indexOf(key)).getStatus() == 0 || notes.get(keyboard.indexOf(key)).getStatus() == 4)
         notes.get(keyboard.indexOf(key)).setStatus(1);
     } else if (soundMode == 1) {
-      notes.get(keyboard.indexOf(key)).setStatus(1);
+      if (notes.get(keyboard.indexOf(key)).getStatus() == 0 || notes.get(keyboard.indexOf(key)).getStatus() == 4)
+        notes.get(keyboard.indexOf(key)).setStatus(1);
     }
-  } else if (key == '1') {
+  } else if (key == '!') {
     stoPlay.set(0, true);
     playCount.set(0, 0);
-  } else if (key == '2') {
+  } else if (key == '@') {
     stoPlay.set(1, true);
     playCount.set(1, 0);
-  } else if (key == '3') {
+  } else if (key == '#') {
     stoPlay.set(2, true);
     playCount.set(2, 0);
   }
@@ -746,14 +736,18 @@ void keyPressed() {
 
 void keyReleased() {
   if (keyboard.indexOf(key) != -1) {
-    notes.get(keyboard.indexOf(key)).setStatus(4);
+    if (soundMode == 0) {
+      notes.get(keyboard.indexOf(key)).setStatus(4);
+    } else if (soundMode == 1) { 
+      notes.get(keyboard.indexOf(key)).setStatus(4);
+    }
   } else if (key == '?') {
     if (recording) {
       recording = false;
       stored.add(new Double[rec.size()]);
       stoPlay.add(false);
       playCount.add(0);
-      for (int i = 0; i < rec.size(); i++) {
+      for (int i = 0; i < rec.size (); i++) {
         stored.get(recCount)[i] = rec.get(i);
       }
       recCount++;
@@ -822,3 +816,4 @@ void play(double[] input) {
     play(input[i]);
   }
 }
+

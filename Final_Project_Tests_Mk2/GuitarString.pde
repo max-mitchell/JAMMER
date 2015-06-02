@@ -53,11 +53,11 @@ public class GuitarString implements Music {
   }
 
   public float getGain() {
-    return gain;
+    return gain/5.0;
   }
 
   public void setGain(float b) {
-    gain = b;
+    gain = b*5.0;
   }
 
   // pluck the guitar string by replacing the buffer with white noise
