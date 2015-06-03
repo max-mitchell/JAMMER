@@ -82,6 +82,7 @@ float gainValue = 0;
 float distMax, distMin = 0;
 float distVal = 50;
 float LFOval = 50;
+float LFOlow = .3;
 float LFOmod = 0;
 boolean LFOdown = false;
 float maxAmp = 0;
@@ -110,7 +111,7 @@ float stepCount = 12;
 void setup() {
   begin();
   size(1000, 700);
-  background(20, 70, 200);
+  background(21, 190, 22);
   println(Arduino.list());
   arduino = new Arduino(this, Arduino.list()[1], 57600);  //other inputs
   port = new Serial(this, Serial.list()[2], 9600);  //trellis
@@ -120,7 +121,7 @@ void setup() {
 
 void draw() {
   timer++;
-  background(20, 70, 200);
+  background(21, 190, 22);
   stroke(0);
   fill(0);
   rect(0, 300, 1000, 400);
@@ -154,7 +155,7 @@ void draw() {
   }
 
 
-  LFOmod = map(LFOval, 0, 300, 10, 0);
+  LFOmod = map(LFOval, 0, 1024, .5, 0);
 
 
 
@@ -162,7 +163,8 @@ void draw() {
   vol = arduino.analogRead(1);
   //distVal = arduino.analogRead(2);
   //LFOval = arduino.analogRead(3);
-  stringFade = map(arduino.analogRead(4), 0, 1024, .99, 1.0);
+  //stringFade = map(arduino.analogRead(4), 0, 1024, .99, 1.0);
+  //LFOlow = map(arduino.analogRead(5), 0, 1024, .5, 0);
 
 
   if (createNote) {
@@ -177,7 +179,7 @@ void draw() {
       for (int i = 0; i < 16; i++) {
         notes.add(new Note(new double[(int)(44100.0/hzs[i])+1], hzs[i], i));
         notes.get(i).pluck();
-        strings.add(new GuitarString(hzs[i], i));
+        strings.add(new GuitarString(hzs[i], i, stringFade));
         strings.get(i).pluck();
         //println(notes.get(i).out());
       }
@@ -205,19 +207,7 @@ void draw() {
     }
   }
 
-  // if (arduino.digitalRead(7) == Arduino.HIGH) {
-  //   //    /println("touched"+millis());
-  //   change = true;
-  // }
-
-  // if (change) {
-  //   //createNote = true;
-  //   change = false;
-  // }
-
-  //arduino.tone(9, 500);
-
-  //halfStep = 16.35*pow((pitch/30.0)/12+octo, 2) * 2 =  16.35*pow((pitch/30.0+halfStep*12.0)/12+octo, 2)
+  // *don't do away with*  halfStep = 16.35*pow((pitch/30.0)/12+octo, 2) * 2 =  16.35*pow((pitch/30.0+halfStep*12.0)/12+octo, 2)
 
   halfStep = 1.0/stepCount * (sqrt(2) * sqrt(pow((pitch/30.0), 2.0)+stepCount*2 * (pitch/30.0) * octo+stepCount*stepCount * pow(octo, 2.0))-(pitch/30.0)-stepCount * octo);
 
@@ -227,6 +217,8 @@ void draw() {
 
   if (doLFO == false) {
     gainValue = map(vol, 1024, 0, 0, .8);
+  } else {
+    maxAmp =  map(vol, 1024, 0, 0, .8);
   }
 
 
@@ -251,10 +243,12 @@ void draw() {
           gainValue += LFOmod;
         }
 
-        if (gainValue < 0) {
+        if (gainValue < LFOlow) {
           LFOdown = false;
+          gainValue = LFOlow;
         } else if (gainValue > maxAmp) {
           LFOdown = true;
+          gainValue = maxAmp;
         }
       }
     }
@@ -263,17 +257,28 @@ void draw() {
 
 
 
+
+
+      if (strings.get(m).getStatus() == 1) {
+        strings.set(m, new GuitarString(hzs[m], m+16, stringFade));
+        strings.get(m).pluck();
+        strings.get(m).setStatus(3);
+        strings.get(m).setGain(gainValue);
+      }
+
+
+      //
+
+
+      else if (strings.get(m).getStatus() == 3) {
+        if (doLFO)
+          notes.get(m).setGain(gainValue);
+      }
+
       if (notes.get(m).getStatus() == 1) {
         notes.set(m, new Note(new double[(int)(44100.0/hzs[m])+1], hzs[m], m));
         notes.get(m).pluck();
         notes.get(m).setStatus(10);
-      }
-
-      if (strings.get(m).getStatus() == 1) {
-        strings.set(m, new GuitarString(hzs[m], m+16));
-        strings.get(m).pluck();
-        strings.get(m).setStatus(99);
-        strings.get(m).setGain(gainValue);
       }
 
       //
@@ -343,6 +348,8 @@ void draw() {
           } else 
             a2+=notes.get(m).sample() * notes.get(m).getGain();
 
+
+
           if (strings.get(m).sample() * strings.get(m).getGain() > distMax) {
             a2+=distMax;
           } else if (strings.get(m).sample() * strings.get(m).getGain() < -distMax) {
@@ -395,103 +402,18 @@ void draw() {
 
 
 
-    //    if (timer > timeAtPlay[0] + 120) {
-    //      drumming = false;
-    //      drums1.clear();
-    //    }
-
-    //    if (drumming == false) {
-    //      //drums1.setValue(0);
-    //    }
-    //    drums1.setValue(gainValue);
-    //dist.setRange(distMin, distMax);
-    //}
-
-    //if (endIt) {
-    /*double a2 = 0;
-     
-     for (int i = 0; i <= N; i++) {
-     for (int j = 0; j < 13; j++) {
-     a2+=notes.get(j).getSine(i);
-     }
-     play(a2);
-     if (i % 10 == 0 && i > 0) {
-     line(map(i, 0, N, 300, 1000), map((float)a2, -1, 1, 0, 300), 
-     map(i-10, 0, N, 300, 1000), map((float)lastSamp, -1, 1, 0, 300));
-     
-     lastSamp = a2;
-     }
-     a2 = 0;
-     }*/
-
-    //println(hz1);
-    //createNote = true;
-  }
-  // arduino.tone(9, outPut);
-
-  //if (doTheThing) {
-  //  arduino.analogWrite(9, (int)map((float)a2[m], -1, 1, 0, 1024));
-  //  m++;
-  //  if (m >= a2.length) {
-  //    m = 0;
-  //  }
-
-
-  //println(a2[m]);
-  //}
-
-  //  if (arduino.digitalRead(4) == Arduino.HIGH) {
-  //    plays[7] = true;
-  //  } else if (arduino.digitalRead(4) == Arduino.LOW) {
-  //    plays[7] = false;
-  //  }
-  //
-  //  if (arduino.digitalRead(3) == Arduino.HIGH) {
-  //    plays[5] = true;
-  //  } else if (arduino.digitalRead(3) == Arduino.LOW) {
-  //    plays[5] = false;
-  //  }
-  //
-  //  if (arduino.digitalRead(2) == Arduino.HIGH) {
-  //    plays[4] = true;
-  //  } else if (arduino.digitalRead(2) == Arduino.LOW) {
-  //    plays[4] = false;
-  //  }
-  //
-  //  if (arduino.digitalRead(1) == Arduino.HIGH) {
-  //    plays[2] = true;
-  //  } else if (arduino.digitalRead(1) == Arduino.LOW) {
-  //    plays[2] = false;
-  //  }
-  //
-  //  if (arduino.digitalRead(0) == Arduino.HIGH) {
-  //    plays[0] = true;
-  //  } else if (arduino.digitalRead(0) == Arduino.LOW) {
-  //    plays[0] = false;
-  //  }
-  //println(arduino.digitalRead(4));
-
-
-
-
-
-
-
-
-
-
-
-  if (port.available() > 0) {
-    in = port.readString();
-    String tempIn = "";
-    //println(in + "|" + in.length());
-    for (int i = 0; i < in.length (); i++) {
-      if (nums.indexOf(in.charAt(i)) != -1) {
-        tempIn+=in.substring(i, i+1);
+    if (port.available() > 0) {
+      in = port.readString();
+      String tempIn = "";
+      //println(in + "|" + in.length());
+      for (int i = 0; i < in.length (); i++) {
+        if (nums.indexOf(in.charAt(i)) != -1) {
+          tempIn+=in.substring(i, i+1);
+        }
       }
-    }
-    if (tempIn.length() == 2) {
-      Tval = Integer.parseInt(tempIn);
+      if (tempIn.length() == 2) {
+        Tval = Integer.parseInt(tempIn);
+      }
     }
   }
 
@@ -565,26 +487,29 @@ void draw() {
       y+=50;
       x++;
     }
-    if (buttons[i]) {
-      if (i < 16) {
-        if (notes.get(i).getStatus() == 0 || notes.get(i).getStatus() == 4)
-          notes.get(i).setStatus(1);
-      } else if (i < 32) {
-        if (strings.get(i-16).getStatus() == 0 || strings.get(i-16).getStatus() == 4)
-          strings.get(i-16).setStatus(1);
-      } else if (i < 32 + stored.size()) {
-        stoPlay.set(i-32, true);
-        playCount.set(i-32, 0);
+    if (endIt) {
+      if (buttons[i]) {
+        if (i < 16) {
+          if (notes.get(i).getStatus() == 0 || notes.get(i).getStatus() == 4)
+            notes.get(i).setStatus(1);
+        } else if (i < 32) {
+          if (strings.get(i-16).getStatus() == 0 || strings.get(i-16).getStatus() == 4)
+            strings.get(i-16).setStatus(1);
+        } else if (i < 32 + stored.size()) {
+          stoPlay.set(i-32, true);
+          playCount.set(i-32, 0);
+        }
+        fill(255);
+      } else {
+        if (i < 16) {
+          notes.get(i).setStatus(4);
+        } else if (i < 32) {
+          strings.get(i-16).setStatus(4);
+        }
+        fill(50);
       }
-      fill(255);
-    } else {
-      if (i < 16) {
-        notes.get(i).setStatus(4);
-      } else if (i < 32) {
-        strings.get(i-16).setStatus(4);
-      }
+    } else 
       fill(50);
-    }
     rect(map(i-(16*x), 0, 15, 40, 450), 300+y, 20, 20);
   }
 
@@ -606,7 +531,7 @@ void draw() {
   fill(0);
   text("On/Off", 100, 100);
   text("Distort", 75, 225);
-  text("LFO", 125, 225);
+  text("Tremolo", 125, 225);
   rectMode(CENTER);
   stroke(220);
   rect(225, map(pitch, 0, 1024, 0, 300), 25, 25);
@@ -622,19 +547,19 @@ void draw() {
   ellipse(40, 330, 20, 20);
   text("REC", 65, 330);
   if (doLFO)
-    fill(255, 0, 0);
+    fill(0, 0, 255);
   else 
-    fill(20, 70, 200);
+    fill(21, 190, 22);
   ellipse(160, 225, 10, 10);
   if (distort)
-    fill(255, 0, 0);
+    fill(0, 0, 255);
   else 
-    fill(20, 70, 200);
+    fill(21, 190, 22);
   ellipse(40, 225, 10, 10);
   if (endIt)
     fill(255, 0, 0);
   else 
-    fill(20, 70, 200);
+    fill(21, 190, 22);
   ellipse(40, 60, 10, 10);
 }
 
@@ -653,7 +578,7 @@ void mouseReleased() {
     else {
       doLFO = true;
       maxAmp = gainValue;
-      maxPit = 16.35*pow((pitch/30.0)/12.0+octo, 2);
+      maxPit = (440.0+pitch)*pow(1.05956, (12*octo)-12);
       println(maxPit);
     }
   }
