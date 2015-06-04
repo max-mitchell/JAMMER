@@ -24,12 +24,14 @@ public class GuitarString implements Music {
   private int button = 0;
   private float gain;
   private int status = 0;
+  private float stringF = 0;
 
   // create a guitar string of the given frequency
-  public GuitarString(double frequency, int b) {
+  public GuitarString(double frequency, int b, float f) {
     buffer = new RingBuffer((int)(44100.0 / frequency)+1);
     size = (int)(44100.0 / frequency)+1;
     button = b;
+    stringF = f;
   }
 
   // create a guitar string with size & initial values given by the array
@@ -53,11 +55,11 @@ public class GuitarString implements Music {
   }
 
   public float getGain() {
-    return gain/5.0;
+    return gain;
   }
 
   public void setGain(float b) {
-    gain = b*5.0;
+    gain = b*3.0;
   }
 
   // pluck the guitar string by replacing the buffer with white noise
@@ -82,7 +84,7 @@ public class GuitarString implements Music {
     buffer.dequeue();
     f2 = buffer.peek();
 
-    toLast = .5 * (f1+f2) * (double)map(size, 441, 0, .99, 1);//.994;
+    toLast = .5 * (f1+f2) * (double)map(size, 441, 0, stringF, 1);//.994;
     buffer.enqueue(toLast);
   }
 
