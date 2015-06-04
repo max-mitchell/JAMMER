@@ -82,7 +82,7 @@ float gainValue = 0;
 float distMax, distMin = 0;
 float distVal = 50;
 float LFOval = 50;
-float LFOlow = .3;
+float LFOlow = .1;
 float LFOmod = 0;
 boolean LFOdown = false;
 float maxAmp = 0;
@@ -113,10 +113,14 @@ void setup() {
   size(1000, 700);
   background(21, 190, 22);
   println(Arduino.list());
-  arduino = new Arduino(this, Arduino.list()[1], 57600);  //other inputs
-  port = new Serial(this, Serial.list()[2], 9600);  //trellis
+  arduino = new Arduino(this, Arduino.list()[0], 57600);  //other inputs
+  port = new Serial(this, Serial.list()[1], 9600);  //trellis
   //conor = loadImage("maliha.jpg");
   //frameRate(200);
+  arduino.pinMode(2, Arduino.INPUT);
+  arduino.pinMode(4, Arduino.INPUT);
+  arduino.pinMode(6, Arduino.INPUT);
+  arduino.pinMode(8, Arduino.INPUT);
 }
 
 void draw() {
@@ -155,18 +159,53 @@ void draw() {
   }
 
 
+
+ /* if (arduino.digitalRead(4) == Arduino.LOW)
+    distort = false;
+  else 
+    distort = true;
+
+  if (arduino.digitalRead(6) == Arduino.LOW) 
+    doLFO = false; 
+  else if (arduino.digitalRead(6) == Arduino.HIGH) {
+    if (doLFO == false) {
+      doLFO = true;
+      maxAmp = gainValue;
+      maxPit = (440.0+pitch)*pow(1.05956, (12*octo)-12);
+    }
+  }
+
+
+  if (arduino.digitalRead(8) == Arduino.LOW) {
+    if (recording) {
+      recording = false;
+      stored.add(new Double[rec.size()]);
+      stoPlay.add(false);
+      playCount.add(0);
+      for (int i = 0; i < rec.size (); i++) {
+        stored.get(recCount)[i] = rec.get(i);
+      }
+      recCount++;
+      rec.clear();
+    }
+  } else if (arduino.digitalRead(8) == Arduino.HIGH) {
+    recording = true;
+  }
+
+  println(arduino.digitalRead(8) + "   " + recording);
+*/
   LFOmod = map(LFOval, 0, 1024, .5, 0);
 
 
 
   pitch = arduino.analogRead(0);
   vol = arduino.analogRead(1);
-  //distVal = arduino.analogRead(2);
-  //LFOval = arduino.analogRead(3);
-  //stringFade = map(arduino.analogRead(4), 0, 1024, .99, 1.0);
-  //LFOlow = map(arduino.analogRead(5), 0, 1024, .5, 0);
+  distVal = arduino.analogRead(2);
+  LFOval = arduino.analogRead(3);
+  stringFade = map(arduino.analogRead(4), 0, 1024, .98, 1.0);
+  LFOlow = map(arduino.analogRead(5), 0, 1024, .5, 0);
 
-
+  //if (arduino.digitalRead(2) == Arduino.HIGH){
   if (createNote) {
     if (endIt == false) {
 
@@ -733,3 +772,4 @@ void play(double[] input) {
     play(input[i]);
   }
 }
+
