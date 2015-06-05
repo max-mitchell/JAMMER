@@ -109,7 +109,7 @@ float halfStep = 0;
 float stepCount = 12;
 
 void setup() {
-  begin();
+  begin();//initializes the sound "library"
   size(1000, 700);
   background(21, 190, 22);
   println(Arduino.list());
@@ -120,7 +120,7 @@ void setup() {
   arduino.pinMode(2, Arduino.INPUT);
   arduino.pinMode(4, Arduino.INPUT);
   arduino.pinMode(6, Arduino.INPUT);
-  arduino.pinMode(8, Arduino.INPUT);
+  arduino.pinMode(8, Arduino.INPUT);//pins for the buttons
 }
 
 void draw() {
@@ -160,10 +160,11 @@ void draw() {
 
 
 
- /* if (arduino.digitalRead(4) == Arduino.LOW)
+  if (arduino.digitalRead(4) == Arduino.LOW)
     distort = false;
   else 
     distort = true;
+    //distort on/off button
 
   if (arduino.digitalRead(6) == Arduino.LOW) 
     doLFO = false; 
@@ -173,7 +174,7 @@ void draw() {
       maxAmp = gainValue;
       maxPit = (440.0+pitch)*pow(1.05956, (12*octo)-12);
     }
-  }
+  }//Trem on/off button
 
 
   if (arduino.digitalRead(8) == Arduino.LOW) {
@@ -190,10 +191,12 @@ void draw() {
     }
   } else if (arduino.digitalRead(8) == Arduino.HIGH) {
     recording = true;
-  }
+  }//recording on/off button
 
   println(arduino.digitalRead(8) + "   " + recording);
-*/
+  
+  //COMMENT OUT ^^ if none of the buttons are in use
+
   LFOmod = map(LFOval, 0, 1024, .5, 0);
 
 
@@ -204,6 +207,8 @@ void draw() {
   LFOval = arduino.analogRead(3);
   stringFade = map(arduino.analogRead(4), 0, 1024, .98, 1.0);
   LFOlow = map(arduino.analogRead(5), 0, 1024, .5, 0);
+  //These are signal inputs from all of the potentiometers and slide resistors
+  //COMMENT OUT ^^ if not using an arduino
 
   //if (arduino.digitalRead(2) == Arduino.HIGH){
   if (createNote) {
@@ -239,26 +244,27 @@ void draw() {
 
       createNote = false;
       endIt = true;
-    } else if (endIt) {
+    }//when the ON/OFF button is pressed -- here the buttonpad note and string arrays are filled and initialized
+    else if (endIt) {
       notes.clear();
       endIt = false;
       createNote = false;
-    }
+    }//turn off
   }
 
   // *don't do away with*  halfStep = 16.35*pow((pitch/30.0)/12+octo, 2) * 2 =  16.35*pow((pitch/30.0+halfStep*12.0)/12+octo, 2)
 
   halfStep = 1.0/stepCount * (sqrt(2) * sqrt(pow((pitch/30.0), 2.0)+stepCount*2 * (pitch/30.0) * octo+stepCount*stepCount * pow(octo, 2.0))-(pitch/30.0)-stepCount * octo);
+  //This determines the spaces between halfsteps for every posible octave 
 
 
-
-  distMax = map(distVal, 0, 1024, 1, 0);
+  distMax = map(distVal, 0, 1024, 1, 0);//for determining distortion
 
   if (doLFO == false) {
     gainValue = map(vol, 1024, 0, 0, .8);
   } else {
     maxAmp =  map(vol, 1024, 0, 0, .8);
-  }
+  }//for determining amplitude / amplitude when Trem is on
 
 
   if (endIt) {
@@ -270,7 +276,7 @@ void draw() {
 
     for (int j = 0; j < hzs.length; j++) {
       hzs[j] = (440.0+pitch)*pow(1.05956, (j+12*octo)-12);//(440.0*pow(((pitch/30.0)+(halfStep*(float)j))/12.0+octo, 2));
-    }
+    }//generates the pitches for the current note set
 
 
 
@@ -290,7 +296,7 @@ void draw() {
           gainValue = maxAmp;
         }
       }
-    }
+    }//Trem code
 
     for (int m = 0; m < notes.size (); m++) {
 
@@ -303,7 +309,7 @@ void draw() {
         strings.get(m).pluck();
         strings.get(m).setStatus(3);
         strings.get(m).setGain(gainValue);
-      }
+      }//string init 
 
 
       //
@@ -312,13 +318,13 @@ void draw() {
       else if (strings.get(m).getStatus() == 3) {
         if (doLFO)
           notes.get(m).setGain(gainValue);
-      }
+      }//string sustain for Trem
 
       if (notes.get(m).getStatus() == 1) {
         notes.set(m, new Note(new double[(int)(44100.0/hzs[m])+1], hzs[m], m));
         notes.get(m).pluck();
         notes.get(m).setStatus(10);
-      }
+      }//note init
 
       //
 
@@ -327,7 +333,7 @@ void draw() {
         notes.get(m).setGain(notes.get(m).getGain()+gainValue*.4);
         if (notes.get(m).getGain() >= gainValue+gainValue*.2)
           notes.get(m).setStatus(2);
-      }
+      }//note attack
 
 
       //
@@ -337,7 +343,7 @@ void draw() {
         notes.get(m).setGain(notes.get(m).getGain()-gainValue*.2);
         if (notes.get(m).getGain() <= gainValue)
           notes.get(m).setStatus(3);
-      }
+      }//note decay
 
 
       //
@@ -345,7 +351,7 @@ void draw() {
 
       else if (notes.get(m).getStatus() == 3) {
         notes.get(m).setGain(gainValue);
-      } 
+      }//note sustain
 
       //
 
@@ -355,7 +361,7 @@ void draw() {
           notes.get(m).setStatus(0);
           notes.get(m).setGain(0);
         }
-      }
+      }//note release
 
 
       //
@@ -364,7 +370,7 @@ void draw() {
       else if (notes.get(m).getStatus() == 0) {
         if (soundMode == 0)
           notes.get(m).setGain(0);
-      }
+      }//note off
 
 
       //
@@ -399,6 +405,7 @@ void draw() {
           a2+=notes.get(m).sample() * notes.get(m).getGain();
           a2+=strings.get(m).sample() * strings.get(m).getGain();
         }
+        //adding sine waves together
       }
 
       for (int j = 0; j < stored.size (); j++) {
@@ -410,34 +417,35 @@ void draw() {
             break;
           }
         }
-      }
+      }//if playing back a recording, add that too
 
 
 
-      play(a2);
+      play(a2);//play the tone
 
       if (recording) {
         rec.add(a2);
-      }
+      }//if recording, record
 
       if (i % 5 == 0 && i > 0) {
         line(map(i, 0, N, 300, 1000), map((float)a2, -1, 1, 0, 300), 
         map(i-5, 0, N, 300, 1000), map((float)lastSamp, -1, 1, 0, 300));
 
         lastSamp = a2;
-      }
+      }//visulization 
 
       for (int m = 0; m < notes.size (); m++) {
         notes.get(m).tic();
         strings.get(m).tic();
-      }
+      }//advance the RingBuffer (make the note progress further in time)
       //println(notes.get(12).out());
-    }
+    }//plays N notes per draw() runthrough
     for (int j = 0; j < stored.size (); j++) {
       if (stoPlay.get(j) == true) {
         playCount.set(j, playCount.get(j)+N);
       }
-    }
+    }//advance the playback time count so that the recordings can stop when they finish
+  
 
 
 
@@ -453,8 +461,9 @@ void draw() {
       if (tempIn.length() == 2) {
         Tval = Integer.parseInt(tempIn);
       }
-    }
-  }
+    }//read from the Trellis
+    //COMMENT OUT ^^ if no Trellis board
+  }//if ON...
 
   for (int i = 0; i < buttons.length; i++) {
     if (i == Tval) {
@@ -468,7 +477,7 @@ void draw() {
           buttons[i] = false;
       }
     }
-  }
+  }//activation buttons based on Trellis input
 
 
 
@@ -496,6 +505,8 @@ void draw() {
   fill(43, 153, 224);
   text(gainValue, 400, 350);
   text("Volume", 400, 315);
+  
+  //amp dial
 
 
   line(300, 380, 300, 370);
@@ -513,6 +524,8 @@ void draw() {
   fill(43, 153, 224);
   text((int)(440.0*pow(1.05956, (12*octo)-12)), 300, 350);
   text("Pitch", 300, 315);
+  
+  //pitch dial
 
   noStroke();
 
@@ -531,13 +544,15 @@ void draw() {
         if (i < 16) {
           if (notes.get(i).getStatus() == 0 || notes.get(i).getStatus() == 4)
             notes.get(i).setStatus(1);
-        } else if (i < 32) {
+        }//notes 
+        else if (i < 32) {
           if (strings.get(i-16).getStatus() == 0 || strings.get(i-16).getStatus() == 4)
             strings.get(i-16).setStatus(1);
-        } else if (i < 32 + stored.size()) {
+        }//strings
+        else if (i < 32 + stored.size()) {
           stoPlay.set(i-32, true);
           playCount.set(i-32, 0);
-        }
+        }//recording playback
         fill(255);
       } else {
         if (i < 16) {
@@ -550,7 +565,7 @@ void draw() {
     } else 
       fill(50);
     rect(map(i-(16*x), 0, 15, 40, 450), 300+y, 20, 20);
-  }
+  }//for playing notes based on Trellis input
 
 
 
@@ -605,13 +620,15 @@ void draw() {
 void mouseReleased() {
   if (mouseX < 150 && mouseX > 50 && mouseY < 150 && mouseY > 50) {
     createNote = true;
-  } else if (mouseX < 100 && mouseX > 50 && mouseY < 250 && mouseY > 200) {
+  }//on/off 
+  else if (mouseX < 100 && mouseX > 50 && mouseY < 250 && mouseY > 200) {
     if (distort) {
       distort = false;
     } else if (distort == false) {
       distort = true;
     }
-  } else if (mouseX < 150 && mouseX > 100 && mouseY < 250 && mouseY > 200) {
+  }//distort on/off 
+  else if (mouseX < 150 && mouseX > 100 && mouseY < 250 && mouseY > 200) {
     if (doLFO) 
       doLFO = false; 
     else {
@@ -620,7 +637,7 @@ void mouseReleased() {
       maxPit = (440.0+pitch)*pow(1.05956, (12*octo)-12);
       println(maxPit);
     }
-  }
+  }//trem on/off
 }
 
 void mouseDragged() {
@@ -633,7 +650,7 @@ void mouseDragged() {
   } else  if (mouseX < 400 && mouseX > 350) {
     LFOval = map(mouseY, 0, 1024, 0, 300);
   }
-}
+}//for dragging the sliders in the UI
 
 void mouseWheel(MouseEvent event) {
   float a = event.getCount();
@@ -658,7 +675,7 @@ void mouseWheel(MouseEvent event) {
     else 
       LFOval -= 50;
   }
-}
+}//for scrolling the sliders in the UI
 
 
 void mousePressed() {
@@ -667,7 +684,7 @@ void mousePressed() {
   } else if (mouseX < 300 && mouseX > 250) {
     vol = mouseY;
   }
-}
+}//defunct
 
 void keyPressed() {
   if (keyboard.indexOf(key) != -1) {
@@ -688,7 +705,7 @@ void keyPressed() {
     stoPlay.set(2, true);
     playCount.set(2, 0);
   }
-}
+}//trellis board functionality on the keyboard
 
 void keyReleased() {
   if (keyboard.indexOf(key) != -1) {
@@ -711,17 +728,19 @@ void keyReleased() {
     } else {
       recording = true;
     }
-  } else if (key == CODED) {
+  }//record 
+  else if (key == CODED) {
     if (keyCode == UP) {
       octo++;
     } else if (keyCode == DOWN) {
       octo--;
-    } else if (keyCode == ALT) {
+    }//octave up and down 
+    else if (keyCode == ALT) {
       if (soundMode == 0)
         soundMode = 1;
       else 
         soundMode = 0;
-    }
+    }//notes to strings on the keyboard
   }
 }
 
@@ -746,7 +765,7 @@ void begin() {
 
   // no sound gets made before this call
   line1.start();
-}
+}//sound output init -- adapted from STDaudio
 
 
 void play(double in) {
@@ -758,14 +777,14 @@ void play(double in) {
   // convert to bytes
   short s = (short) (MAX_16_BIT * in);
   buffer[bufferSize++] = (byte) s;
-  buffer[bufferSize++] = (byte) (s >> 8);   // little Endian
+  buffer[bufferSize++] = (byte) (s >> 8);  
 
   // send to sound card if buffer is full        
   if (bufferSize >= buffer.length) {
     line1.write(buffer, 0, buffer.length);
     bufferSize = 0;
   }
-}
+}//sound output 
 
 void play(double[] input) {
   for (int i = 0; i < input.length; i++) {
