@@ -112,15 +112,17 @@ void setup() {
   begin();//initializes the sound "library"
   size(1000, 700);
   background(21, 190, 22);
+  
+  
   println(Arduino.list());
   arduino = new Arduino(this, Arduino.list()[0], 57600);  //other inputs
   port = new Serial(this, Serial.list()[1], 9600);  //trellis
-  //conor = loadImage("maliha.jpg");
   //frameRate(200);
   arduino.pinMode(2, Arduino.INPUT);
   arduino.pinMode(4, Arduino.INPUT);
   arduino.pinMode(6, Arduino.INPUT);
   arduino.pinMode(8, Arduino.INPUT);//pins for the buttons
+  //COMMENT OUT ^^ if not using an arduino and/or trellis 
 }
 
 void draw() {
@@ -195,12 +197,6 @@ void draw() {
 
   println(arduino.digitalRead(8) + "   " + recording);
   
-  //COMMENT OUT ^^ if none of the buttons are in use
-
-  LFOmod = map(LFOval, 0, 1024, .5, 0);
-
-
-
   pitch = arduino.analogRead(0);
   vol = arduino.analogRead(1);
   distVal = arduino.analogRead(2);
@@ -208,7 +204,10 @@ void draw() {
   stringFade = map(arduino.analogRead(4), 0, 1024, .98, 1.0);
   LFOlow = map(arduino.analogRead(5), 0, 1024, .5, 0);
   //These are signal inputs from all of the potentiometers and slide resistors
-  //COMMENT OUT ^^ if not using an arduino
+  //COMMENT OUT ^^ if not using an arduino (buttons included)
+  
+  
+  LFOmod = map(LFOval, 0, 1024, .5, 0);
 
   //if (arduino.digitalRead(2) == Arduino.HIGH){
   if (createNote) {
