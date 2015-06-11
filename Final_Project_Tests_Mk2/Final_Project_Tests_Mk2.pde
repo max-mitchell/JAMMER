@@ -113,8 +113,11 @@ void setup() {
   begin();//initializes the sound "library"
   size(1000, 700);
   background(21, 190, 22);
+  
+  
   println(Arduino.list());
   arduino = new Arduino(this, Arduino.list()[0], 57600);  //other inputs
+<<<<<<< HEAD
   //port = new Serial(this, Serial.list()[1], 9600);  //trellis
   //conor = loadImage("maliha.jpg");
   //frameRate(200);
@@ -122,6 +125,15 @@ void setup() {
   //arduino.pinMode(4, Arduino.INPUT);
   //arduino.pinMode(6, Arduino.INPUT);
   //arduino.pinMode(8, Arduino.INPUT);//pins for the buttons
+=======
+  port = new Serial(this, Serial.list()[1], 9600);  //trellis
+  //frameRate(200);
+  arduino.pinMode(2, Arduino.INPUT);
+  arduino.pinMode(4, Arduino.INPUT);
+  arduino.pinMode(6, Arduino.INPUT);
+  arduino.pinMode(8, Arduino.INPUT);//pins for the buttons
+  //COMMENT OUT ^^ if not using an arduino and/or trellis 
+>>>>>>> origin/master
 }
 
 void draw() {
@@ -161,6 +173,7 @@ void draw() {
 
 
 
+<<<<<<< HEAD
   /* if (arduino.digitalRead(4) == Arduino.LOW)
    distort = false;
    else 
@@ -202,6 +215,43 @@ void draw() {
    */
 
 
+=======
+  if (arduino.digitalRead(4) == Arduino.LOW)
+    distort = false;
+  else 
+    distort = true;
+    //distort on/off button
+
+  if (arduino.digitalRead(6) == Arduino.LOW) 
+    doLFO = false; 
+  else if (arduino.digitalRead(6) == Arduino.HIGH) {
+    if (doLFO == false) {
+      doLFO = true;
+      maxAmp = gainValue;
+      maxPit = (440.0+pitch)*pow(1.05956, (12*octo)-12);
+    }
+  }//Trem on/off button
+
+
+  if (arduino.digitalRead(8) == Arduino.LOW) {
+    if (recording) {
+      recording = false;
+      stored.add(new Double[rec.size()]);
+      stoPlay.add(false);
+      playCount.add(0);
+      for (int i = 0; i < rec.size (); i++) {
+        stored.get(recCount)[i] = rec.get(i);
+      }
+      recCount++;
+      rec.clear();
+    }
+  } else if (arduino.digitalRead(8) == Arduino.HIGH) {
+    recording = true;
+  }//recording on/off button
+
+  println(arduino.digitalRead(8) + "   " + recording);
+  
+>>>>>>> origin/master
   pitch = arduino.analogRead(0);
   vol = arduino.analogRead(1);
   distVal = arduino.analogRead(2);
@@ -209,7 +259,10 @@ void draw() {
   stringFade = map(arduino.analogRead(4), 0, 1024, .98, 1.0);
   LFOlow = map(arduino.analogRead(5), 0, 1024, .5, 0);
   //These are signal inputs from all of the potentiometers and slide resistors
-  //COMMENT OUT ^^ if not using an arduino
+  //COMMENT OUT ^^ if not using an arduino (buttons included)
+  
+  
+  LFOmod = map(LFOval, 0, 1024, .5, 0);
 
 
   LFOmod = map(LFOval, 0, 1024, .5, 0);
