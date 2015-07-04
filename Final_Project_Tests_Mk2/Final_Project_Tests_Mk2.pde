@@ -101,7 +101,8 @@ boolean doTheThing = false;
 
 double a2[];
 
-String keyboard = "q2we4r5ty7u8i9op-[=zxdcfvgbnjmk,.;/' ";
+String keyboard1 = "q2w3er5t6y7ui9o0";
+String keyboard2 = "zsxdcvgbhnjm,l.;";
 String nums = "1234567890";
 
 double sendToArd = 0;
@@ -112,14 +113,8 @@ void setup() {
   begin();//initializes the sound "library"
   size(1000, 700);
   background(21, 190, 22);
-  
-  
   println(Arduino.list());
   arduino = new Arduino(this, Arduino.list()[0], 57600);  //other inputs
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   //port = new Serial(this, Serial.list()[1], 9600);  //trellis
   //conor = loadImage("maliha.jpg");
   //frameRate(200);
@@ -127,39 +122,6 @@ void setup() {
   //arduino.pinMode(4, Arduino.INPUT);
   //arduino.pinMode(6, Arduino.INPUT);
   //arduino.pinMode(8, Arduino.INPUT);//pins for the buttons
-=======
-  port = new Serial(this, Serial.list()[1], 9600);  //trellis
-  //frameRate(200);
-=======
-  port = new Serial(this, Serial.list()[1], 9600);  //trellis
-  //conor = loadImage("maliha.jpg");
-  //frameRate(200);
->>>>>>> parent of cc7eaa2... For use with no Trellis
-=======
-  port = new Serial(this, Serial.list()[1], 9600);  //trellis
-  //conor = loadImage("maliha.jpg");
-  //frameRate(200);
->>>>>>> parent of cc7eaa2... For use with no Trellis
-=======
-  port = new Serial(this, Serial.list()[1], 9600);  //trellis
-  //conor = loadImage("maliha.jpg");
-  //frameRate(200);
->>>>>>> parent of cc7eaa2... For use with no Trellis
-  arduino.pinMode(2, Arduino.INPUT);
-  arduino.pinMode(4, Arduino.INPUT);
-  arduino.pinMode(6, Arduino.INPUT);
-  arduino.pinMode(8, Arduino.INPUT);//pins for the buttons
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-  //COMMENT OUT ^^ if not using an arduino and/or trellis 
->>>>>>> origin/master
-=======
->>>>>>> parent of cc7eaa2... For use with no Trellis
-=======
->>>>>>> parent of cc7eaa2... For use with no Trellis
-=======
->>>>>>> parent of cc7eaa2... For use with no Trellis
 }
 
 void draw() {
@@ -199,10 +161,6 @@ void draw() {
 
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   /* if (arduino.digitalRead(4) == Arduino.LOW)
    distort = false;
    else 
@@ -242,123 +200,8 @@ void draw() {
    
    
    */
-=======
-=======
->>>>>>> parent of cc7eaa2... For use with no Trellis
-=======
->>>>>>> parent of cc7eaa2... For use with no Trellis
-  if (arduino.digitalRead(4) == Arduino.LOW)
-    distort = false;
-  else 
-    distort = true;
-    //distort on/off button
-
-  if (arduino.digitalRead(6) == Arduino.LOW) 
-    doLFO = false; 
-  else if (arduino.digitalRead(6) == Arduino.HIGH) {
-    if (doLFO == false) {
-      doLFO = true;
-      maxAmp = gainValue;
-      maxPit = (440.0+pitch)*pow(1.05956, (12*octo)-12);
-    }
-  }//Trem on/off button
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> parent of cc7eaa2... For use with no Trellis
 
 
-  if (arduino.digitalRead(8) == Arduino.LOW) {
-    if (recording) {
-      recording = false;
-      stored.add(new Double[rec.size()]);
-      stoPlay.add(false);
-      playCount.add(0);
-      for (int i = 0; i < rec.size (); i++) {
-        stored.get(recCount)[i] = rec.get(i);
-      }
-      recCount++;
-      rec.clear();
-    }
-  } else if (arduino.digitalRead(8) == Arduino.HIGH) {
-    recording = true;
-  }//recording on/off button
-
-  println(arduino.digitalRead(8) + "   " + recording);
-  
-  //COMMENT OUT ^^ if none of the buttons are in use
-
-  LFOmod = map(LFOval, 0, 1024, .5, 0);
-
-<<<<<<< HEAD
->>>>>>> parent of cc7eaa2... For use with no Trellis
-
-
-  if (arduino.digitalRead(8) == Arduino.LOW) {
-    if (recording) {
-      recording = false;
-      stored.add(new Double[rec.size()]);
-      stoPlay.add(false);
-      playCount.add(0);
-      for (int i = 0; i < rec.size (); i++) {
-        stored.get(recCount)[i] = rec.get(i);
-      }
-      recCount++;
-      rec.clear();
-    }
-  } else if (arduino.digitalRead(8) == Arduino.HIGH) {
-    recording = true;
-  }//recording on/off button
-=======
->>>>>>> parent of cc7eaa2... For use with no Trellis
-
-  println(arduino.digitalRead(8) + "   " + recording);
-  
-  //COMMENT OUT ^^ if none of the buttons are in use
-
-  LFOmod = map(LFOval, 0, 1024, .5, 0);
-
->>>>>>> parent of cc7eaa2... For use with no Trellis
-
-
-=======
-  if (arduino.digitalRead(4) == Arduino.LOW)
-    distort = false;
-  else 
-    distort = true;
-    //distort on/off button
-
-  if (arduino.digitalRead(6) == Arduino.LOW) 
-    doLFO = false; 
-  else if (arduino.digitalRead(6) == Arduino.HIGH) {
-    if (doLFO == false) {
-      doLFO = true;
-      maxAmp = gainValue;
-      maxPit = (440.0+pitch)*pow(1.05956, (12*octo)-12);
-    }
-  }//Trem on/off button
-
-
-  if (arduino.digitalRead(8) == Arduino.LOW) {
-    if (recording) {
-      recording = false;
-      stored.add(new Double[rec.size()]);
-      stoPlay.add(false);
-      playCount.add(0);
-      for (int i = 0; i < rec.size (); i++) {
-        stored.get(recCount)[i] = rec.get(i);
-      }
-      recCount++;
-      rec.clear();
-    }
-  } else if (arduino.digitalRead(8) == Arduino.HIGH) {
-    recording = true;
-  }//recording on/off button
-
-  println(arduino.digitalRead(8) + "   " + recording);
-  
->>>>>>> origin/master
   pitch = arduino.analogRead(0);
   vol = arduino.analogRead(1);
   distVal = arduino.analogRead(2);
@@ -366,18 +209,10 @@ void draw() {
   stringFade = map(arduino.analogRead(4), 0, 1024, .98, 1.0);
   LFOlow = map(arduino.analogRead(5), 0, 1024, .5, 0);
   //These are signal inputs from all of the potentiometers and slide resistors
-<<<<<<< HEAD
-<<<<<<< HEAD
-  //COMMENT OUT ^^ if not using an arduino (buttons included)
-  
-  
+  //COMMENT OUT ^^ if not using an arduino
+
+
   LFOmod = map(LFOval, 0, 1024, .5, 0);
-=======
-  //COMMENT OUT ^^ if not using an arduino
->>>>>>> parent of cc7eaa2... For use with no Trellis
-=======
-  //COMMENT OUT ^^ if not using an arduino
->>>>>>> parent of cc7eaa2... For use with no Trellis
 
   //if (arduino.digitalRead(2) == Arduino.HIGH){
   if (createNote) {
@@ -614,24 +449,24 @@ void draw() {
         playCount.set(j, playCount.get(j)+N);
       }
     }//advance the playback time count so that the recordings can stop when they finish
-  
 
 
 
-    if (port.available() > 0) {
-      in = port.readString();
-      String tempIn = "";
-      //println(in + "|" + in.length());
-      for (int i = 0; i < in.length (); i++) {
-        if (nums.indexOf(in.charAt(i)) != -1) {
-          tempIn+=in.substring(i, i+1);
-        }
-      }
-      if (tempIn.length() == 2) {
-        Tval = Integer.parseInt(tempIn);
-      }
-    }//read from the Trellis
-    //COMMENT OUT ^^ if no Trellis board
+
+    /* if (port.available() > 0) {
+     in = port.readString();
+     String tempIn = "";
+     //println(in + "|" + in.length());
+     for (int i = 0; i < in.length (); i++) {
+     if (nums.indexOf(in.charAt(i)) != -1) {
+     tempIn+=in.substring(i, i+1);
+     }
+     }
+     if (tempIn.length() == 2) {
+     Tval = Integer.parseInt(tempIn);
+     }
+     }//read from the Trellis
+     //COMMENT OUT ^^ if no Trellis board*/
   }//if ON...
 
   for (int i = 0; i < buttons.length; i++) {
@@ -674,7 +509,7 @@ void draw() {
   fill(43, 153, 224);
   text(gainValue, 400, 350);
   text("Volume", 400, 315);
-  
+
   //amp dial
 
 
@@ -693,7 +528,7 @@ void draw() {
   fill(43, 153, 224);
   text((int)(440.0*pow(1.05956, (12*octo)-12)), 300, 350);
   text("Pitch", 300, 315);
-  
+
   //pitch dial
 
   noStroke();
@@ -708,31 +543,31 @@ void draw() {
       y+=50;
       x++;
     }
-    if (endIt) {
-      if (buttons[i]) {
-        if (i < 16) {
-          if (notes.get(i).getStatus() == 0 || notes.get(i).getStatus() == 4)
-            notes.get(i).setStatus(1);
-        }//notes 
-        else if (i < 32) {
-          if (strings.get(i-16).getStatus() == 0 || strings.get(i-16).getStatus() == 4)
-            strings.get(i-16).setStatus(1);
-        }//strings
-        else if (i < 32 + stored.size()) {
-          stoPlay.set(i-32, true);
-          playCount.set(i-32, 0);
-        }//recording playback
-        fill(255);
-      } else {
-        if (i < 16) {
-          notes.get(i).setStatus(4);
-        } else if (i < 32) {
-          strings.get(i-16).setStatus(4);
-        }
-        fill(50);
-      }
-    } else 
-      fill(50);
+    /* if (endIt) {
+     if (buttons[i]) {
+     if (i < 16) {
+     if (notes.get(i).getStatus() == 0 || notes.get(i).getStatus() == 4)
+     notes.get(i).setStatus(1);
+     }//notes 
+     else if (i < 32) {
+     if (strings.get(i-16).getStatus() == 0 || strings.get(i-16).getStatus() == 4)
+     strings.get(i-16).setStatus(1);
+     }//strings
+     else if (i < 32 + stored.size()) {
+     stoPlay.set(i-32, true);
+     playCount.set(i-32, 0);
+     }//recording playback
+     fill(255);
+     } else {
+     if (i < 16) {
+     notes.get(i).setStatus(4);
+     } else if (i < 32) {
+     strings.get(i-16).setStatus(4);
+     }
+     fill(50);
+     }
+     } else */
+    fill(50);
     rect(map(i-(16*x), 0, 15, 40, 450), 300+y, 20, 20);
   }//for playing notes based on Trellis input
 
@@ -856,15 +691,15 @@ void mousePressed() {
 }//defunct
 
 void keyPressed() {
-  if (keyboard.indexOf(key) != -1) {
-    if (soundMode == 0) {
-      if (notes.get(keyboard.indexOf(key)).getStatus() == 0 || notes.get(keyboard.indexOf(key)).getStatus() == 4)
-        notes.get(keyboard.indexOf(key)).setStatus(1);
-    } else if (soundMode == 1) {
-      if (notes.get(keyboard.indexOf(key)).getStatus() == 0 || notes.get(keyboard.indexOf(key)).getStatus() == 4)
-        notes.get(keyboard.indexOf(key)).setStatus(1);
-    }
-  } else if (key == '!') {
+  if (keyboard1.indexOf(key) != -1) {
+    if (notes.get(keyboard1.indexOf(key)).getStatus() == 0 || notes.get(keyboard1.indexOf(key)).getStatus() == 4)
+      notes.get(keyboard1.indexOf(key)).setStatus(1);
+  } 
+  if (keyboard2.indexOf(key) != -1) {
+    if (strings.get(keyboard2.indexOf(key)).getStatus() == 0 || strings.get(keyboard2.indexOf(key)).getStatus() == 4)
+      strings.get(keyboard2.indexOf(key)).setStatus(1);
+  }
+  if (key == '!') {
     stoPlay.set(0, true);
     playCount.set(0, 0);
   } else if (key == '@') {
@@ -877,13 +712,13 @@ void keyPressed() {
 }//trellis board functionality on the keyboard
 
 void keyReleased() {
-  if (keyboard.indexOf(key) != -1) {
-    if (soundMode == 0) {
-      notes.get(keyboard.indexOf(key)).setStatus(4);
-    } else if (soundMode == 1) { 
-      notes.get(keyboard.indexOf(key)).setStatus(4);
-    }
-  } else if (key == '?') {
+  if (keyboard1.indexOf(key) != -1) {
+    notes.get(keyboard1.indexOf(key)).setStatus(4);
+  }  
+  if (keyboard2.indexOf(key) != -1) { 
+    strings.get(keyboard2.indexOf(key)).setStatus(4);
+  }
+  if (key == '?') {
     if (recording) {
       recording = false;
       stored.add(new Double[rec.size()]);
@@ -960,4 +795,3 @@ void play(double[] input) {
     play(input[i]);
   }
 }
-
