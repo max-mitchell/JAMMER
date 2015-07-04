@@ -118,6 +118,7 @@ void setup() {
   arduino = new Arduino(this, Arduino.list()[0], 57600);  //other inputs
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   //port = new Serial(this, Serial.list()[1], 9600);  //trellis
   //conor = loadImage("maliha.jpg");
   //frameRate(200);
@@ -133,13 +134,21 @@ void setup() {
   //conor = loadImage("maliha.jpg");
   //frameRate(200);
 >>>>>>> parent of cc7eaa2... For use with no Trellis
+=======
+  port = new Serial(this, Serial.list()[1], 9600);  //trellis
+  //conor = loadImage("maliha.jpg");
+  //frameRate(200);
+>>>>>>> parent of cc7eaa2... For use with no Trellis
   arduino.pinMode(2, Arduino.INPUT);
   arduino.pinMode(4, Arduino.INPUT);
   arduino.pinMode(6, Arduino.INPUT);
   arduino.pinMode(8, Arduino.INPUT);//pins for the buttons
 <<<<<<< HEAD
+<<<<<<< HEAD
   //COMMENT OUT ^^ if not using an arduino and/or trellis 
 >>>>>>> origin/master
+=======
+>>>>>>> parent of cc7eaa2... For use with no Trellis
 =======
 >>>>>>> parent of cc7eaa2... For use with no Trellis
 }
@@ -183,6 +192,7 @@ void draw() {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   /* if (arduino.digitalRead(4) == Arduino.LOW)
    distort = false;
    else 
@@ -223,6 +233,8 @@ void draw() {
    
    */
 =======
+=======
+>>>>>>> parent of cc7eaa2... For use with no Trellis
   if (arduino.digitalRead(4) == Arduino.LOW)
     distort = false;
   else 
@@ -238,6 +250,33 @@ void draw() {
       maxPit = (440.0+pitch)*pow(1.05956, (12*octo)-12);
     }
   }//Trem on/off button
+<<<<<<< HEAD
+=======
+
+
+  if (arduino.digitalRead(8) == Arduino.LOW) {
+    if (recording) {
+      recording = false;
+      stored.add(new Double[rec.size()]);
+      stoPlay.add(false);
+      playCount.add(0);
+      for (int i = 0; i < rec.size (); i++) {
+        stored.get(recCount)[i] = rec.get(i);
+      }
+      recCount++;
+      rec.clear();
+    }
+  } else if (arduino.digitalRead(8) == Arduino.HIGH) {
+    recording = true;
+  }//recording on/off button
+
+  println(arduino.digitalRead(8) + "   " + recording);
+  
+  //COMMENT OUT ^^ if none of the buttons are in use
+
+  LFOmod = map(LFOval, 0, 1024, .5, 0);
+
+>>>>>>> parent of cc7eaa2... For use with no Trellis
 
 
   if (arduino.digitalRead(8) == Arduino.LOW) {
@@ -309,10 +348,14 @@ void draw() {
   stringFade = map(arduino.analogRead(4), 0, 1024, .98, 1.0);
   LFOlow = map(arduino.analogRead(5), 0, 1024, .5, 0);
   //These are signal inputs from all of the potentiometers and slide resistors
+<<<<<<< HEAD
   //COMMENT OUT ^^ if not using an arduino (buttons included)
   
   
   LFOmod = map(LFOval, 0, 1024, .5, 0);
+=======
+  //COMMENT OUT ^^ if not using an arduino
+>>>>>>> parent of cc7eaa2... For use with no Trellis
 
   //if (arduino.digitalRead(2) == Arduino.HIGH){
   if (createNote) {
