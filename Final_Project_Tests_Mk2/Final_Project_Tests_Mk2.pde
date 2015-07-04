@@ -119,6 +119,7 @@ void setup() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   //port = new Serial(this, Serial.list()[1], 9600);  //trellis
   //conor = loadImage("maliha.jpg");
   //frameRate(200);
@@ -139,14 +140,22 @@ void setup() {
   //conor = loadImage("maliha.jpg");
   //frameRate(200);
 >>>>>>> parent of cc7eaa2... For use with no Trellis
+=======
+  port = new Serial(this, Serial.list()[1], 9600);  //trellis
+  //conor = loadImage("maliha.jpg");
+  //frameRate(200);
+>>>>>>> parent of cc7eaa2... For use with no Trellis
   arduino.pinMode(2, Arduino.INPUT);
   arduino.pinMode(4, Arduino.INPUT);
   arduino.pinMode(6, Arduino.INPUT);
   arduino.pinMode(8, Arduino.INPUT);//pins for the buttons
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   //COMMENT OUT ^^ if not using an arduino and/or trellis 
 >>>>>>> origin/master
+=======
+>>>>>>> parent of cc7eaa2... For use with no Trellis
 =======
 >>>>>>> parent of cc7eaa2... For use with no Trellis
 =======
@@ -193,6 +202,7 @@ void draw() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   /* if (arduino.digitalRead(4) == Arduino.LOW)
    distort = false;
    else 
@@ -235,6 +245,8 @@ void draw() {
 =======
 =======
 >>>>>>> parent of cc7eaa2... For use with no Trellis
+=======
+>>>>>>> parent of cc7eaa2... For use with no Trellis
   if (arduino.digitalRead(4) == Arduino.LOW)
     distort = false;
   else 
@@ -251,7 +263,10 @@ void draw() {
     }
   }//Trem on/off button
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> parent of cc7eaa2... For use with no Trellis
 
 
   if (arduino.digitalRead(8) == Arduino.LOW) {
@@ -276,6 +291,7 @@ void draw() {
 
   LFOmod = map(LFOval, 0, 1024, .5, 0);
 
+<<<<<<< HEAD
 >>>>>>> parent of cc7eaa2... For use with no Trellis
 
 
@@ -294,6 +310,8 @@ void draw() {
   } else if (arduino.digitalRead(8) == Arduino.HIGH) {
     recording = true;
   }//recording on/off button
+=======
+>>>>>>> parent of cc7eaa2... For use with no Trellis
 
   println(arduino.digitalRead(8) + "   " + recording);
   
@@ -349,10 +367,14 @@ void draw() {
   LFOlow = map(arduino.analogRead(5), 0, 1024, .5, 0);
   //These are signal inputs from all of the potentiometers and slide resistors
 <<<<<<< HEAD
+<<<<<<< HEAD
   //COMMENT OUT ^^ if not using an arduino (buttons included)
   
   
   LFOmod = map(LFOval, 0, 1024, .5, 0);
+=======
+  //COMMENT OUT ^^ if not using an arduino
+>>>>>>> parent of cc7eaa2... For use with no Trellis
 =======
   //COMMENT OUT ^^ if not using an arduino
 >>>>>>> parent of cc7eaa2... For use with no Trellis
